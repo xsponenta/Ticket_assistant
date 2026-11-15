@@ -217,12 +217,12 @@ A second LLM played the user. It knew a real hidden ticket, opened with one vagu
 
 | | Model picks the type | **User confirms the type (the real UX)** | Target |
 |---|---:|---:|---:|
-| Required information recovered | 0.46 | **0.95** | ≥ 0.90 ✅ |
-| Details not in the original ticket | 3.3% | **1.5%** | ≤ 5% ✅ |
-| User messages per ticket | 2.4 | **2.3** | ≤ 4 ✅ |
-| Bug tickets with all four elements | 0.53 | **0.80** | ≥ 0.90 ❌ (history: 0.03) |
-| Word overlap with the original facts | 0.45 | 0.43 | ≥ 0.80 ❌ |
-| Cost per ticket · slowest turns (p95) | **$0.0013 · 6.9 s** | | ≤ $0.01 · 8 s ✅ |
+| Required information recovered | 0.46 | **0.95** | ≥ 0.90 |
+| Details not in the original ticket | 3.3% | **1.5%** | ≤ 5% |
+| User messages per ticket | 2.4 | **2.3** | ≤ 4 |
+| Bug tickets with all four elements | 0.53 | **0.80** | ≥ 0.90 (history: 0.03) |
+| Word overlap with the original facts | 0.45 | 0.43 | ≥ 0.80 |
+| Cost per ticket · slowest turns (p95) | **$0.0013 · 6.9 s** | | ≤ $0.01 · 8 s |
 
 **What the two columns show:**
 - **Letting the user confirm the type is essential.** From one vague sentence, the classifier guesses the right type only 43% of the time, and a wrong type means asking for the wrong fields.
