@@ -1,0 +1,7 @@
+# Raw downloaded data (large, re-creatable)
+data/raw/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
