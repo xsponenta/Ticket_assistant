@@ -529,3 +529,12 @@ Tests: `tests/test_pipeline.py::test_m6_pass1_never_alerts_and_confirmed_compone
 | **Two policies:** auto (C1's top-1 class) and user-corrects (the simulated user confirms the gold class: the intended UX, M1). Both: top-1 component, dismiss nothing, continue on the scope stop, accept the assumptions. Policy auto runs first; corrects reuses its cache, so **latency and cost come from auto only**. | One policy. | auto measures C1's real cost to the dialogue; corrects measures the product as designed. |
 | **Field text recall** is compared with the gold extraction's concise `value` (primary) and with its verbatim quotes (secondary, stricter: quotes are often whole code blocks). The match is lexical (no stemming). | Quotes only. | Quotes made recall structurally low (0.40–0.45 on smoke) even for correct fields. |
 | Code at **commit `d4c9892`** (recorded in `eval/e2e_final_config.json`; M6 fixes in `9dc7e65`); the test run checks that HEAD matches. | — | Reproducibility. |
+
+## M7 · A failed C3 check continues to the ticket (post-test robustness fix) — 2026-11-15
+
+| Decision | Alternatives | Why |
+|---|---|---|
+| If the C3 call fails (e.g. `already_supported` without a `doc_reference`, rejected twice by the validator), the pipeline records the error in the trace and `state.c3 = {failed, error}`, keeps `last_error` empty and **continues to C2 pass 2 and C6**. The UI notes "the documentation check failed, so we continue to the ticket". | Stop and ask the user to retry (the original graceful-failure behaviour): the retry hits the same cached failure. | C3 is advisory: under M3 every outcome except a grounded `already_supported` means "continue". In the e2e test, this failure was the only reason a dialogue produced no ticket (1 of 60 per policy). |
+| **Status: post-test fix**, approved by the user after the e2e test. The test numbers (`e2e_test_20261115T181923Z.json`) are **not** replaced. A separate, labelled post-test rerun of only SPARK-19469 and SPARK-3833 (`eval/results/e2e_posttest_20261115T182617Z.json`, commit `99d72b9`) gives completion 2/2 under both policies; field recovery is 1.0 (corrects) and 0.0 (auto, wrong class). | Rerun the whole test. | Rerunning the test after a fix would turn the test set into a tuning set. |
+
+Test: `tests/test_pipeline.py::test_m7_failed_scope_check_continues_to_the_ticket`.

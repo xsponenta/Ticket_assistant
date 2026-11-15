@@ -854,3 +854,9 @@ stateDiagram-v2
 - **An idea under auto,** e.g. SPARK-44646: classified as feature, so the idea fields (problem, users, impact) were never collected.
 
 All 5 review transcripts (one per class plus the worst) are in `e2e_review_test_20261115T181923Z.md` for the user's manual check.
+
+**Post-test robustness fix M7** (user-approved after the test; the test numbers above are unchanged):
+- **The change:** a failed C3 call now continues to the ticket instead of stopping.
+- **The check:** a separate, labelled rerun of only the two failed tickets (`eval/results/e2e_posttest_20261115T182617Z.json`, commit `99d72b9`).
+- **Result:** completion 2/2 under both policies (C3 still fails on both; the failure is in the trace). Field recovery is 1.0 under corrects, and 0.0 under auto because C1 picks the wrong class.
+- **Not claimed:** a 60/60 completion rate. That would need a new, untouched test set.
