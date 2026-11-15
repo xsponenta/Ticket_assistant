@@ -1,59 +1,75 @@
-# Ticket Intake Assistant for Apache Spark — Final Report
+# Ticket Intake Assistant for Apache Spark
 
-UCU NLP course, Assignment 1 · CRISP-DM · code at `main` (`087297a`) · all numbers link to `reports/0*_*.md`,
-`reports/decisions.md` and `eval/results/*.json`.
+*UCU NLP course, Assignment 1. Built with the CRISP-DM process. Detailed phase reports: [`01`](01_business_understanding.md) · [`02`](02_data_understanding.md) · [`03`](03_data_preparation.md) · [`04`](04_modeling.md) · [`05`](05_evaluation.md) · [`06`](06_deployment.md); every decision with its alternatives is in [`decisions.md`](decisions.md).*
 
-## 1. Task and scope
+## Summary
 
-- **Problem:** Spark receives about 3.5–4.7k Jira issues a year, and most fall short of the contributing guide (`01_business_understanding.md`):
-  - only **3.4%** of bug descriptions contain all four elements (reproduction, expected, actual, version/environment);
-  - **36.7%** of issues have an empty description;
-  - 16% of resolved bugs are closed as Incomplete, Duplicate, Invalid, Not A Problem, Cannot Reproduce or Won't Fix.
-- **What the system does:** a chat assistant turns a vague request ("Spark crashes when…", "it would be nice if…") into a Jira-ready ticket of one of four classes (bug, feature, task, idea).
-  - It checks for **duplicates**, asks **at most 2 questions per turn** (at most 4 turns), and checks against the docs whether the request is **already supported**.
-  - It never invents facts: anything inferred is listed as an assumption for the user to confirm.
-- **Out of scope:**
-  - writing to Jira (the output is Markdown + JSON to paste);
-  - other ASF projects; non-English tickets;
-  - fixing bugs.
+Most Apache Spark Jira tickets are hard to act on: only **3.4%** of bug reports contain the four things a developer needs (how to reproduce, what was expected, what happened, which version).
 
-## 2. Data
+This project builds a chat assistant that turns a vague message such as *"Spark job fails when I read a big parquet folder"* into a complete Jira ticket:
+- it suggests the ticket type;
+- it shows related existing issues;
+- it asks a few targeted questions (at most 2 at a time);
+- for feature requests, it checks the documentation in case the request is already supported;
+- it writes the ticket without inventing anything.
 
-| Source | Content | Use |
+In an end-to-end test with 60 real tickets and a simulated user, the assistant recovered **95%** of the required information in **2.3 user turns**, for **$0.0013 per ticket** and under **7 s per turn** (p95). It invented almost nothing: 1.5% of the specific details in its tickets were not in the original. **80%** of its bug tickets contain all four elements, against 3.4% in Spark's history (the target, 90%, is not met).
+
+## 1. The problem
+
+Spark receives about 3.5–4.7 thousand Jira issues a year. The project's contributing guide asks for a clear title, a reproduction for bugs and the affected version, but most tickets fall short:
+
+| Evidence (SPARK issues since 2020) | Value |
+|---|---:|
+| Bug reports with all four elements (reproduction, expected, actual, version) | **3.4%** |
+| Issues with an empty description | 36.7% |
+| Resolved bugs closed without a fix (Incomplete, Duplicate, Invalid, Cannot Reproduce, …) | 16% |
+
+Every incomplete ticket costs a committer time to triage, and the reporter often waits for nothing. The assistant targets the moment the problem is cheapest to fix: **while the ticket is being written.**
+
+**In scope:** English SPARK tickets of four types (bug, feature, task, idea); a Markdown + JSON ticket the user pastes into Jira.
+
+**Out of scope:** writing to Jira automatically, other Apache projects, and fixing bugs.
+
+## 2. What the assistant does
+
+A session is a short chat with a side panel:
+1. **The user describes the problem in their own words.** The assistant suggests the **ticket type** (top 2) and component, and the user confirms with one click. It also shows **related existing issues**.
+2. **It asks for what is missing.** It works out which required fields of that ticket type are still missing and asks **at most 2 concrete questions per turn**, for at most 4 turns. The user can type "skip" at any time, or answer "I don't know"; it then stops asking about that field.
+3. **For feature, task and idea requests, it checks the Spark documentation.** If the docs show the request is **already supported**, it says so with a link, and the user can stop there.
+4. **It runs a second, more precise duplicate check** on the full description.
+5. **It writes the ticket.** Anything it inferred rather than heard (for example "PySpark", guessed from the code) is listed under **"Assumptions to confirm"**. The user confirms or corrects each one before the ticket is final.
+
+The output follows the contributing guide: a descriptive title, one section per field, "Unknown (reporter)" where the user did not know, and no priority or fix version (committers set those).
+
+## 3. Data
+
+| Source | What | Used for |
 |---|---|---|
-| Apache Jira REST API (`src/data/fetch_jira.py`) | 31,290 SPARK issues created 2020-01-01 … 2026-11-15 + 158 SPARK Wishes since 2014 | C1, C2, the eval sets |
-| Spark 4.3.0 docs (`fetch_docs.py`, `fetch_doc_tables.py`) | 245 Markdown pages + the rendered SQL function / config tables → **2,932 chunks** | C3 (RAG) |
+| Apache Jira REST API | 31,290 SPARK issues (2020 – Nov 2026) + 158 older Wish issues | type classifier, duplicate search, all test sets |
+| Spark 4.3.0 documentation | 245 pages + the generated SQL function and config tables, split into **2,932 chunks** | the documentation check |
 
-**Key EDA numbers** (`02_data_understanding.md`, `notebooks/eda.ipynb`):
-- **Classes are very imbalanced** (core types): bug 6,994 · feature 9,144 · task 996 · idea 45. Sub-task is 39% of SPARK.
-- **Bug structure:** 14% of bugs use reproduce wording, 19% state the expected behaviour, 21% the actual behaviour; 3.4% have all four elements. 49% show a code block and 42% a stack trace.
-- **Duplicates:** 484 duplicate pairs; the link direction agrees with the resolution for 76% of the duplicates.
-- **2026 is a drift:** bug filings jumped from about 60 a month to 530 in the first half of November, with templated, PR-linked tickets.
-- **PII** is rare (user mentions in 0.4% of descriptions, e-mails in 0.1%) and is masked.
+**What the data taught us** (`02_data_understanding.md`):
+- **The types are very imbalanced:** feature and bug dominate; "idea" (Wish) is 0.3%.
+- **Bug reports *show* rather than *describe*:** 49% contain code and 42% a stack trace, but only 19–21% say what was expected or what happened. This is exactly the gap the questions target.
+- **2026 looks different:** bug filings jumped about 9× and became templated, developer-written reports. That's why 2026 is kept as a separate "drift" set.
+- **Duplicate links are usable:** 484 Duplicate pairs give a real test set for duplicate search.
 
-**Decisions D1–D5** (`decisions.md`):
+**Key data decisions** (`decisions.md`, D1–D5):
 
-| | Decision |
+| Decision | Why |
 |---|---|
-| **D1** | Class mapping: bug = Bug; feature = New Feature / Improvement / Story; task = Task / Test / Documentation / Dependency upgrade; idea = Wish / Brainstorming. Sub-task excluded. |
-| **D2** | idea = SPARK Wish (all-time) + Brainstorming. Wishes from other projects are not used, because they reveal their project (63% name it). |
-| **D3** | Main set = created before 2026 → **14,989 issues** (bug 5,419 · feature 7,624 · task 1,784 · idea 162). All of 2026 is a **drift set** (3,567). |
-| **D4** | No resampling; stratified, Duplicate-group-aware 70/15/15 split (**frozen**, test hash `339455ee…`); macro-F1; class weights allowed. |
-| **D5** | E-mails → `<EMAIL>`, Jira/@user mentions → `<USER>`, URL credentials removed. Jira wiki markup → Markdown, with code protected (`src/data/clean.py`). |
+| Map Jira types to four classes; exclude Sub-tasks | Sub-tasks (39% of SPARK) are fragments of other issues; 56% have no description |
+| "Idea" = SPARK Wish issues only, not Wishes from other projects | Those name their own project in 63% of cases, so a model would learn "not about Spark ⇒ idea" |
+| Train and test on issues before 2026; 2026 is a drift set | Measure how the classifier copes with the new style |
+| A 70/15/15 split, frozen, with duplicates kept in the same split | A duplicate pair across splits would leak the answer |
+| Mask e-mails and user names; convert Jira markup to Markdown | Privacy, and a single clean text format |
 
-**Eval sets** (`data/eval/`, all frozen):
+All test sets are frozen files in `data/eval/`, evaluated once.
 
-| Set | Size | Used for |
-|---|---|---|
-| `classification_test` | 324 | C1 |
-| `duplicates` | 148 duplicate + 100 non-duplicate queries; the later issue is the query, the earlier the gold | C2 |
-| `scope_labeled` | 80, labelled manually by the user; split dev 30 / test 50 | C3 |
-| `gap_ablation` | 303 dev / 301 test items | C4–C6 |
-| `simulator_candidates` | 60 | end-to-end |
+## 4. How it works, and why it is built this way
 
-## 3. Architecture
-
-### (a) Data flow
+### Data flow
 
 ```mermaid
 flowchart LR
@@ -100,11 +116,22 @@ flowchart LR
   classDef ext fill:#f6f6f6,stroke:#aaaaaa,color:#333
 ```
 
-- **All LLM calls** go through `src/llm.py` → OpenRouter (generator `deepseek-v4.1-flash`, reasoning off), with a disk cache, retries, structured output with one repair, the call log `logs/llm_calls.jsonl`, and Langfuse if its keys are set.
-- **Dotted edges** mark the steps that read a store. The type classifier is fitted on the train split of `issues.parquet`.
-- **Evaluation-only models:** judge `google/gemini-3.5-flash-lite` (C3 judges); simulator `qwen/qwen3.5-27b` (end-to-end). Neither is used by the app.
+All LLM calls go through one client (`src/llm.py`) to OpenRouter, using `deepseek-v4.1-flash` with reasoning off. The client provides caching, retries, validated JSON output and a call log. Two more models are used only for evaluation, never by the app: a judge (`gemini-3.5-flash-lite`) and a simulated user (`qwen3.5-27b`).
 
-### (b) Pipeline state machine (`src/pipeline.py`, no agent framework)
+### The six steps and the reasoning behind them
+
+| Step | What it does | Why this design |
+|---|---|---|
+| **Type classifier** (C1) | Suggests the ticket type and component | A simple TF-IDF model matched the LLM (macro-F1 0.54 vs 0.57, overlapping CIs), and is **free and instant**. Jira types are filing conventions that even a careful human matches only 37% of the time, so the user confirms the type instead of trusting the model. |
+| **Duplicate search** (C2) | Finds similar existing issues | A small local embedding model (`bge-small`) beat keyword search and hybrid search on real Duplicate pairs. It runs twice: the first time it shows "related issues" only, because a one-line message gives too many false alarms; the second time, on the full description, it may raise an alert. The alert never blocks the user: a false alarm costs one click, a missed duplicate costs a wasted ticket. |
+| **Gap detector** (C4) | Marks every field as confirmed, assumed, missing or "unknown" | Each "confirmed" value must quote the user's words. "Assumed" covers what is inferred, and those values are shown for confirmation later. "Unknown" means the user said they don't know, so the assistant never asks again. |
+| **Question generator** (C5) | Asks ≤ 2 questions, required fields first | It is told which fields are already given and which ones the user cannot answer, so it doesn't ask redundant questions. |
+| **Docs check** (C3) | "Is this already supported?" | It retrieves the 8 most relevant doc chunks, and the LLM must cite one. It says "already supported" **only** when the named API or config really appears in those chunks; a wrong "yes" would stop a user who needs a ticket. If the check fails, the dialogue simply continues. |
+| **Ticket composer** (C6) | Writes the ticket | The LLM writes only the text (title and field descriptions). Code assembles the ticket, so the hard rules ("Unknown (reporter)", the assumptions list, no priority, the correct Jira type) hold by construction, not by prompt. |
+
+### The dialogue as a state machine
+
+The orchestration is an explicit state machine (`src/pipeline.py`) rather than an agent framework. Every step is predictable, testable with mocks, and logged with its latency and cost in the app's **Trace** panel.
 
 ```mermaid
 stateDiagram-v2
@@ -136,137 +163,129 @@ stateDiagram-v2
     Done --> [*]
 ```
 
-**What each transition does** (the edge labels are short on purpose; the details are here):
+**What the transitions mean:**
+- **The question loop** ends when no required field is missing, when the user types "skip", or after 4 turns.
+- **The first diamond is the docs check** (feature, task and idea only). A grounded "already supported" offers a stop; anything else goes on to the ticket.
+- **The second diamond** runs the duplicate check and the composer; assumptions, if any, go to the user.
+- **When the user confirms or corrects the assumptions,** the ticket is re-rendered without another LLM call.
+- **If a step fails,** the session is kept and the step can be retried.
 
-| Transition | What runs |
-|---|---|
-| First message | Type classifier (top-2 classes) + duplicate search 1, shown as related issues with no alert (M6) |
-| Field missing / answer, still missing | Gap detector, then the question generator (≤ 2 questions); the loop is capped at 4 turns |
-| Complete, skip, cap | Questions end when no required field is missing, the user types "skip", or 4 turns are reached |
-| Grounded match | At the first diamond (docs check), feature / task / idea only: the docs check says "already supported" with a `doc_reference` found in the retrieved docs (M3) |
-| Otherwise | A bug (no docs check), any other verdict, or a failed docs check (M7) |
-| Assumptions exist / no assumptions | Duplicate search 2 (alert at ≥ 0.839) + the ticket composer run first; assumed fields go to the user (M4) |
-| User confirms | Corrections become confirmed fields; the ticket is re-rendered without an LLM call |
+## 5. A real session
 
-- **State:** JSON-serializable.
-- **Trace:** every step is a `TraceEvent` (latency; LLM cost and cache state from the call log). It is visible in the app's "Trace" expander.
-- **Failures:** a failed step is recorded and can be retried, and the session is kept.
+This is the author's manual test of the app; the numbers come from the call log. It ran before the last UX fixes.
 
-## 4. Components
-
-| | Purpose | Input → output | Model / tool | Eval set | Metric | Result (test) vs target |
-|---|---|---|---|---|---|---|
-| **C1** | Ticket type + component, confirmed by the user (M1) | text → top-2 classes, top-3 components | TF-IDF (word + char) + LogReg; LLM few-shot evaluated as the alternative | classification_test (324) | macro-F1 · idea recall · component top-1/3 | 0.542 ✅ (≥ 0.37) · 0.17 ❌ (≥ 0.40; top-2: 0.42) · 0.73 / 0.94 ✅ |
-| **C2** | Show existing SPARK issues; non-blocking alert (M2, M6) | draft → top-5 issues + alert | dense `BAAI/bge-small-en-v1.5`, Jira keys masked | duplicates test (35 + 16) | R@5 · MRR · false alarms | 0.74 ✅ · 0.604 ✅ · 0.25 ❌ (≤ 0.20; borderline) |
-| **C3** | "Already supported?" with a cited doc (M3) | request → verdict + cited chunks + doc_reference | dense top-8 chunks + generator | scope test (50, single user) | precision of `already_supported` (key, M3) · accuracy | 0.625 (5/8, all grounded) · 0.320 ❌ (≥ 0.65; majority 0.52) |
-| **C4** | Field status: confirmed / assumed / missing / unknown | conversation + class → states with evidence | generator, `c4_gap/v2` | ablation test (301) | missing-field F1 (missing / missing + assumed) | 0.837 / **0.889**; natural-gap recall 0.935; `unknown` detected 1.00 |
-| **C5** | ≤ 2 targeted questions | missing fields + context → questions | generator, `c5_questions/v1` | ablation test (oracle / chained) | ≤ 2 per turn · targets missing · re-ask of "unknown" | 1.00 ✅ · 393 / 393 ✅ · 0 ✅; chained coverage 0.54 (C4's misses) |
-| **C6** | Jira-ready ticket, no invention | states + conversation → title, body, fields JSON | generator writes text; code renders the rules | ablation test (301) | schema · grounding · invented tokens · rule checks | 1.00 ✅ · 0.913 · 0.003 ✅ · Unknown / assumptions / no priority 1.00 ✅ |
-
-## 5. Walkthrough: one real app session (the user's manual run, session `43e35408b110`, 17:56 UTC)
-**Sources:**
-- per-call latency, tokens and cost from `logs/llm_calls.jsonl`;
-- the exact messages and outputs from the request cache (`.cache/llm/`);
-- C1 and C2 are not LLM calls and are not persisted, so they were **recomputed deterministically** on the same inputs (same results by construction).
-
-The session ran before the M6 fixes.
-
-| # | Step | What happened | Time | Cost |
+| | Step | What happened | Time | Cost |
 |---|---|---|---:|---:|
-| 1 | User | "Spark job fails when I read a big parquet folder" | | |
-| 2 | **C1** (local) | bug 0.83 · task 0.08; components SQL, Spark Core, other → the user confirmed **bug · SQL** | 9 ms | $0 |
-| 3 | **C2 pass 1** (local) | top-1 SPARK-12677 "Lazy file discovery for parquet", cosine 0.829 ≥ 0.821. **Alert raised on an unrelated issue**, which motivated M6 (pass 1 now never alerts) | 187 ms | $0 |
-| 4 | **C4** | summary confirmed; actual behaviour "confirmed" from "fails" alone; steps, expected and environment missing | 1.9 s | $0.00022 |
-| 5 | **C5** | Q1 steps_to_reproduce (minimal code), Q2 environment (version, API, deployment) | 1.3 s | $0.00012 |
-| 6 | User | `spark.read.parquet("s3://bucket/events/").groupBy("user_id").count().show()` — "executor dies with java.lang.OutOfMemoryError: Java heap space. Spark 4.0.1, PySpark, on Kubernetes" | | |
-| 7 | **C4** | steps, actual, environment confirmed (quoted evidence); expected missing | 2.4 s | $0.00029 |
-| 8 | **C5** | Q: expected behaviour (did it work in a previous version?) | 1.0 s | $0.00014 |
-| 9 | User | "It should just return the count per user. The same job worked fine on Spark 3.5.1 last month." | | |
-| 10 | **C4** | expected + **regression_since** confirmed (optional, volunteered); component "assumed" SQL (M6 now overrides it with the confirmed value) | 1.6 s | $0.00028 |
-| 11 | **C2 pass 2** (local) | top-1 SPARK-32277 "Memory limit exception on high usage of direct buffer pool" 0.844 ≥ 0.839 → alert; also SPARK-44718 "High on-heap memory usage … parquet-file reading" | 20 ms | $0 |
-| 12 | **C6** | Title **"Executor OOM on groupBy().count() over large parquet folder in Spark 4.0.1"**, Bug · SQL; sections steps (code fence), expected, actual (error fence), environment, regression; no labels; no priority | 0.9 s | $0.00014 |
+| 1 | User | *"Spark job fails when I read a big parquet folder"* | | |
+| 2 | Type classifier | bug 83%, task 8% → the user confirms **bug · SQL** | 9 ms | $0 |
+| 3 | Duplicate search 1 | top match *"Lazy file discovery for parquet"*, which is unrelated. It raised an alert, and that is why the first search now shows related issues without an alert | 0.2 s | $0 |
+| 4 | Gap detector → questions | missing: reproduction, expected behaviour, version. Asks for **a minimal snippet** and **the version / API / deployment** | 3.2 s | $0.0003 |
+| 5 | User | `spark.read.parquet("s3://bucket/events/").groupBy("user_id").count().show()`: *"executor dies with OutOfMemoryError. Spark 4.0.1, PySpark, Kubernetes"* | | |
+| 6 | Gap detector → question | only the expected behaviour is missing: *"did it work in a previous version?"* | 3.4 s | $0.0004 |
+| 7 | User | *"It should just return the count per user. The same job worked fine on Spark 3.5.1 last month."* | | |
+| 8 | Gap detector, duplicate search 2 | all four bug elements are now confirmed, plus "regression since 3.5.1"; related issues: memory-limit and on-heap-memory parquet issues | 1.6 s | $0.0003 |
+| 9 | Ticket composer | **"Executor OOM on groupBy().count() over large parquet folder in Spark 4.0.1"**: a Bug with steps (code), expected, actual (error), environment, regression | 0.9 s | $0.0001 |
 
-- **Totals:** 3 typed user turns, 2 question rounds, 6 LLM calls, about 9 s of system time, **$0.0012**.
-- **Every rendered fact is in the user's messages.** The C6 invented-token check finds none.
-- **How it compares:** all four bug elements are present, the case only 3.4% of historical SPARK bugs reach.
+**Totals:** 3 user messages, 6 LLM calls, about 9 s and **$0.0012**. Every detail in the ticket came from the user. A one-line complaint became a ticket with all four elements, which only 3.4% of historical Spark bugs have.
 
-## 6. CRISP-DM mapping and iterations
+## 6. How we evaluated it, and the results
 
-| Phase | Artefacts | Iterations (logged in both phases + `decisions.md`) |
-|---|---|---|
-| 1 Business | `01_business_understanding.md`, `ticket_types.yaml` | **Written after Phases 2–3 and the model bake-off**, so the targets use EDA numbers. C1 targets lowered to the human ceiling (B2). |
-| 2 Data understanding | `02_data_sanity.md`, `02_data_understanding.md`, `eda.ipynb` | — |
-| 3 Data preparation | `03_data_preparation.md`, `src/data/*`, frozen splits and eval sets | **Doc corpus bug found in C3 modelling:** the generated SQL function / config tables were missing (iteration 1, +111 chunks); **one-entry chunks** (iteration 2, 898 chunks; the user declared it the last). The ablation set (E1) was built during C4 work. |
-| 4 Modeling | `04_modeling.md` (C1–C6, pipeline, e2e) | **C4 `v1 → v2`** (a smoke fix: stack traces copied, evidence omitted); **extraction `v1 → v2`** (23% → 0% failures); **simulator `sim_user v1 → v2`** ("my ticket" mentions); metric fixes after smoke runs (C6 invented tokens, simulator checks). |
-| 5 Evaluation | `05_evaluation.md`, `eval/results/*.json` | Test **once** per component with an approved `*_final_config.json` (lock); judge calibration; C4 leak audit; **M7 post-test fix** with a separately labelled rerun. |
-| 6 Deployment | `README.md`, `app/streamlit_app.py` | M6 UX fixes from the user's manual run. |
+**Principles** (followed for every component):
+- Tune on development data; evaluate each **test set once**, after the configuration is approved (a lock in the code enforces it).
+- Prefer **deterministic metrics** (does the quote occur in the text, is the field present, is the schema valid) over an LLM judge.
+- Where people must judge, use **blind human audits**.
+- Report targets that were missed, and explain why.
 
-**Product decisions:**
+### Component results (test sets)
 
-| | Decision |
-|---|---|
-| **M1** | C1 = baseline; the user confirms the type from the top-2. |
-| **M2** | C2 runs twice; the alert is non-blocking (a false alarm costs a click, a missed duplicate a ticket). |
-| **M3** | C3 is precision-oriented: "already supported" is shown only with a grounded doc_reference. |
-| **M4** | Assumed fields are never accepted silently ("Assumptions to confirm"). |
-| **M5** | C6: the LLM writes text, code enforces the rules; questions only for required fields. |
-| **M6** | UX fixes: pass 1 without alert; the confirmed component wins; "not provided" for optional fields. |
-| **M7** | A failed C3 call continues to the ticket. |
+| Step | Main metric | Result | Target |
+|---|---|---:|---:|
+| Type classifier | macro-F1 · component top-3 | 0.54 · 0.94 | ≥ 0.37 (human level) ✅ · ≥ 0.85 ✅ |
+| Duplicate search | found in top 5 · false alarms | 0.74 · 0.25 | ≥ 0.60 ✅ · ≤ 0.20 ❌ (borderline) |
+| Docs check | precision of "already supported" · accuracy | 0.63 (8/8 claims cited) · 0.32 | — · ≥ 0.65 ❌ |
+| Gap detector | finding missing fields (F1, counting "assumed" as found) | 0.89 | — |
+| Question generator | right questions, ≤ 2, never re-asking "I don't know" | 1.00 | ✅ |
+| Ticket composer | valid · grounded · invented details | 1.00 · 0.91 · 0.3% | ✅ |
 
-## 7. Evaluation summary
+![C4–C6 scores](figures/c4_c5_c6_scores.png)
 
-**End-to-end** (60 hidden test tickets, simulated user, `e2e_test_20261115T181923Z.json`):
+*Gap detector, question generator and ticket composer on the dev and test sets: real tickets with 1–2 required fields deleted, so the gold "missing" answer is known (`scripts/plot_c456_scores.py`).*
 
-| Metric | auto (C1 picks) | **corrects (user picks the type)** | Target |
+### End-to-end (60 real test tickets, simulated user)
+
+A second LLM played the user. It knew a real hidden ticket, opened with one vague sentence, and answered only what it was asked.
+
+| | Model picks the type | **User confirms the type (the real UX)** | Target |
 |---|---:|---:|---:|
-| Required-field recovery | 0.458 | **0.954** [0.91–0.99] | ≥ 0.90 ✅ |
-| Facts not in the hidden ticket | 3.3% | **1.5%** | ≤ 5% ✅ |
-| Typed user turns | 2.4 | **2.3** | ≤ 4 ✅ |
-| Bug tickets with all 4 elements | 0.53 | **0.80** (history 3.4%) | ≥ 0.90 ❌ |
-| Content-word recall vs gold (lexical) | 0.45 | 0.43 | ≥ 0.80 ❌ |
-| Cost / p95 latency per turn | **$0.0013 / 6.9 s** | — | ≤ $0.01 / 8 s ✅ |
-| Completion | 0.983 | 0.983 (2 / 2 after M7, post-test, labelled) | — |
+| Required information recovered | 0.46 | **0.95** | ≥ 0.90 ✅ |
+| Details not in the original ticket | 3.3% | **1.5%** | ≤ 5% ✅ |
+| User messages per ticket | 2.4 | **2.3** | ≤ 4 ✅ |
+| Bug tickets with all four elements | 0.53 | **0.80** | ≥ 0.90 ❌ (history: 0.03) |
+| Word overlap with the original facts | 0.45 | 0.43 | ≥ 0.80 ❌ |
+| Cost per ticket · slowest turns (p95) | **$0.0013 · 6.9 s** | | ≤ $0.01 · 8 s ✅ |
 
-**References and calibration:**
-- **Human ceiling (C1):** the user, labelling 40 val issues without the Jira type, scored macro-F1 **0.37** against Jira; both models scored higher (0.52–0.56). Jira types encode filing conventions, so C1 is a suggestion the user confirms.
-- **Judge calibration (C3):**
-  - both judges failed: citation κ **−0.04**, relevance κ **−0.29**, while repeat consistency was 0.87 / 0.93;
-  - this is a criterion mismatch, not noise; the judge's stricter reading was adopted as the definition;
-  - after that, **all C4–C6 and e2e metrics are deterministic**, plus human audits.
-- **C4 leak audit (human, blind, 20 cases):** 69% of C4's "misses" on deleted fields are gold leakage. The corrected false-confirmed rate is **0.31** [0.21–0.38], down from the 0.47 upper bound.
+**What the two columns show:**
+- **Letting the user confirm the type is essential.** From one vague sentence, the classifier guesses the right type only 43% of the time, and a wrong type means asking for the wrong fields.
+- **Once the type is confirmed, almost everything the original reporter knew ends up in the ticket.** The remaining misses are mostly the simulated user wrongly saying "I don't know".
 
-**Why the scores are not higher:**
-1. **Label noise and conventions.** C1 is evaluated against Jira types, and a careful human agrees with them 35% of the time. The C3 labels come from one non-expert annotator. Inside its docs-evidenced subset, the "supporting" chunks are topical, not evidence: 0 of 12 state the capability.
-2. **Docs-grounded by design.** C3 may not claim "supported" without a citation; method-level API docs are not in the corpus; many labels describe internal developer changes.
-3. **Short openers.** C1 sees a single vague sentence in the app (top-1 0.43 in e2e). The UI asks the user to confirm for exactly this reason.
-4. **Gold leakage and lexical metrics.** Deleted fields survive in titles and code blocks (ablation); recall has no stemming or synonyms; the simulator under-answers (5 of the 6 corrects misses).
+### Why some scores are not higher
+1. **The labels themselves are uncertain.** The author, labelling blind, agreed with Jira's ticket types at macro-F1 0.37; the classifier beats that. The documentation-check labels come from one non-expert, and many describe internal code changes that no documentation can confirm.
+2. **The docs check is deliberately strict.** It may only say "already supported" with a citation, and method-level API pages are not in the corpus. So it misses many true cases (recall 0.19) but is mostly right when it does speak.
+3. **Short first messages.** The classifier and the first duplicate search see a single sentence, which is why both hand the decision to the user.
+4. **Measurement limits.**
+   - **Word overlap** penalises paraphrases ("drops" vs "dropped").
+   - **Deleted fields leak back.** In the ablation tests, a deleted field often survives in the title or a code block. A blind human audit of 20 cases showed that 69% of the gap detector's apparent misses were such leaks, so its real error rate is 0.31 rather than 0.47.
+
+**The LLM judge did not work.** An LLM judge for "does this documentation chunk support the answer?" disagreed with the human (κ −0.04), while agreeing with itself 87% of the time. The two simply used different definitions of "support". The project adopted the judge's stricter definition, reported the judge numbers as uncalibrated, and used deterministic checks for all later components.
+
+## 7. How the project evolved (CRISP-DM)
+
+The work followed CRISP-DM: business understanding, data understanding, data preparation, modelling, evaluation, deployment. Several times a later phase sent us back to an earlier one. Each of these iterations is logged in both phase reports and in `decisions.md`:
+
+| What we found | Phase it sent us back to | What changed |
+|---|---|---|
+| Realistic targets need real numbers | Business understanding, written after the EDA | Targets based on measured data; the classifier target set to the human level (0.37) |
+| The documentation corpus was missing the SQL function and config tables (they are generated at build time) | Data preparation | The tables were added: first as lists, then one entry per chunk, so that a single function can be found. The author declared this the last iteration, to avoid tuning on 30 examples |
+| The gap detector copied whole stack traces and skipped its evidence | Modelling | Prompt v2 (required evidence, short quotes): 0 failures, half the cost |
+| The simulated user said "my ticket says…" | Evaluation | Simulator prompt v2 ("speak as yourself") |
+| The manual app run showed a false duplicate alert, an overwritten component and alarming red "missing" badges | Deployment | UX fixes before the end-to-end test |
+| A failed docs check stopped the dialogue (2 of 120 runs) | Evaluation (post-test) | A failure now continues to the ticket; rechecked separately, without replacing the test numbers |
+
+**Product decisions** that shaped the user experience:
+- the user confirms the type;
+- duplicate alerts never block;
+- "already supported" only with a citation;
+- inferred values are always shown for confirmation;
+- the LLM writes text while code enforces the rules;
+- the first duplicate search never alerts;
+- a failed docs check never blocks.
+
+(M1–M7 in `decisions.md`.)
 
 ## 8. Limitations
-- **Single non-expert annotator** for the scope labels, the calibration pairs, the C4 audit and the C5 clarity ratings (2.65/3): no inter-annotator agreement.
-- **Circular gold:** the ablation gold and the e2e gold come from extractions by the same generator family that C4/C6 use (mitigated by verbatim quotes, deterministic span checks and a review of 10 extractions by the assistant).
-- **LLM simulator:**
-  - it answers "don't know" too often when the information exists, and occasionally implies or invents (1 dialogue);
-  - its first message is synthetic;
-  - the hidden test tickets are in C2's corpus (95% self-matches), so the e2e duplicate-alert rate is not a false-alarm rate.
-- **Jira labels as filing conventions:** class, component and resolution reflect how committers file, not only what a ticket is. The 2026 drift (templated, PR-linked bugs) is evaluated only for C1.
-- **Small test sets** where it matters: 24 ideas in C1, 50 scope items, 8 `already_supported` claims (precision CI 0.25–0.88), 60 dialogues.
+
+- **One non-expert annotator** made all manual labels and audits, so there is no inter-annotator agreement.
+- **Circular gold:** the test answers for the gap detector and the end-to-end evaluation were extracted by a model from the same family as the assistant. Verbatim-quote checks and manual review reduce, but do not remove, this bias.
+- **The simulated user** is an LLM. It is sometimes too quick to say "I don't know", once invented a detail, and its first message is synthetic. The hidden test tickets also exist in the duplicate-search corpus, so end-to-end duplicate alerts mostly found the original ticket itself.
+- **Jira labels are filing conventions:** ticket type and component reflect how committers file issues, not only what an issue is.
+- **Small test sets** where it matters: 24 ideas, 50 docs-check items, 60 dialogues. Confidence intervals are reported throughout.
 
 ## 9. Agentic development
-The project was built with Claude Code as a coding agent, under explicit rules:
-- **`AGENTS.md`:** the project contract, covering:
-  - components and I/O; all LLM calls through `src/llm.py`; models chosen by the user only; prompts versioned;
-  - never edit frozen sets; never tune on test; estimate before more than 300 calls; deterministic metrics preferred;
-  - a judge rubric with edge cases in the prompt and in the calibration CLI.
-- **`CLAUDE.md`:** plan mode for multi-file tasks; never start the next CRISP-DM step unasked; a commit message per task; the project skills.
-- **Skills** (`.claude/skills/`, extracted from this project's practice): `add-component`, `run-eval`, `labeling-cli`, `llm-judge`, `crisp-dm-report`, `apache-jira-data`, `user-simulator`.
-- **Plan-first approvals:** every component started with a written plan (approach, metrics, gates, cost). The user approved, amended (e.g. the `unknown` status, the M6 list, the overlap and title rules) or rejected it.
-- **Test locks:** `src/eval/lock.py` needs an approved `*_final_config.json` + `--confirm-test`. The e2e lock also checks that the git commit matches. Frozen sets carry hashes.
-- **Budget guards and cost:** `Budget(limit)` per run, a smoke run with a cost projection first, and the `max_tokens` cap added after a 131k-token runaway. **Total LLM spend for the whole project: $3.15** (8,512 uncached calls; the model bake-off $1.25).
-- **Honesty checks the agent applied to itself:**
-  - it reported failed targets (❌) and upper bounds;
-  - it corrected a wrongly attributed spot check in three documents;
-  - it refused to record a commit that did not describe the running code;
-  - it kept post-test results separate.
+
+The project was built with Claude Code as the coding agent. The rules it worked under:
+- **`AGENTS.md`**, the project contract:
+  - all LLM calls through one client; models chosen by the author only; prompts versioned;
+  - frozen test sets that must never be edited; no tuning on test;
+  - a cost estimate before any run over 300 LLM calls;
+  - deterministic metrics preferred.
+- **`CLAUDE.md`:** plan first for multi-file changes; never start the next phase unasked; propose a commit message per task.
+- **Plan-first approvals:** every component started as a written plan (approach, metrics, gates, cost) that the author approved, amended or rejected before any code was written.
+- **Safeguards in code:**
+  - a test lock (an approved config plus an explicit flag; for the end-to-end test also a matching git commit);
+  - budget guards and smoke runs with cost projections;
+  - a token cap after one runaway response.
+- **Total LLM cost of the whole project: $3.15** (8,512 calls; the model selection bake-off $1.25).
+- **Skills:** the workflow that emerged was finally written down as seven reusable project skills in `.claude/skills/` (adding a component, running an eval, labelling tools, LLM judges, CRISP-DM reports, Jira data, user simulation).
 
 ### What I did manually
 
@@ -295,9 +314,14 @@ The coding agent wrote most of the code, but every important judgement in this p
 - At the end I had the workflow that emerged during the project codified as seven skills (`add-component`, `run-eval`, `labeling-cli`, `llm-judge`, `crisp-dm-report`, `apache-jira-data`, `user-simulator`), each recording the mistakes we actually hit, so the next project starts from them.
 
 ## 10. How to run
-See [`README.md`](../README.md). Deployment notes (runtime requirements, cost and latency per ticket, known risks, monitoring, second iteration) are in [`06_deployment.md`](06_deployment.md).
-- **Setup:** `.venv`, `pip install -r requirements.txt`, `OPENROUTER_API_KEY` in `.env`.
-- **Data pipeline:** `src/data/*`.
-- **App:** `python -m streamlit run app/streamlit_app.py`.
-- **Evals:** `eval/eval_c1…c6.py`, `eval_e2e.py`, each with `--limit` and test locks.
-- **Tests:** `python -m pytest -q` (118 tests, no LLM calls).
+
+**Start the app:**
+
+```bash
+source .venv/bin/activate
+python -m streamlit run app/streamlit_app.py
+```
+
+**More detail:**
+- [`README.md`](../README.md): setup (an OpenRouter key in `.env`), the data pipeline, every evaluation command and the tests (`python -m pytest -q`, 118 tests, no LLM calls).
+- [`06_deployment.md`](06_deployment.md): runtime requirements, cost, known risks and monitoring.

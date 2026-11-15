@@ -4,6 +4,9 @@ A chat assistant that turns a vague request ("Spark crashes when…", "it would 
 Apache Spark Jira ticket (bug, feature, task or idea). UCU NLP course, Assignment 1, built with CRISP-DM
 (`reports/01`–`06`).
 
+📄 **[Read the final report → `reports/REPORT.md`](reports/REPORT.md)**: what the assistant does and why it is built
+this way, a real session, the evaluation results against the targets, the limitations, and how the agent was used.
+
 ```
 first message → C1 type + component (you confirm) → C2 possible duplicates (dismissable)
 → C4 which fields are missing ↔ C5 at most 2 questions per turn (max 4 turns, "skip" to stop)
