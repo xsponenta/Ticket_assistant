@@ -3,6 +3,8 @@
 python eval/eval_e2e.py --split smoke                              # 5 val tickets x both policies
 python eval/eval_e2e.py --split test --confirm-test                # the 60 test simulator candidates, once
 python eval/eval_e2e.py --rescore eval/results/e2e_transcripts_<...>.jsonl   # recompute metrics, no LLM
+python eval/eval_e2e.py --split test --keys SPARK-1,SPARK-2       # post-test check of single tickets (labelled
+                                                                    # "posttest"; never replaces the test numbers)
 
 Policies: auto = confirm C1's top-1 class; corrects = the simulated user confirms the gold class (intended UX).
 Gold fields: data/eval/gap_extractions.jsonl (confirmed + grounded required fields of the gold class).
@@ -362,6 +364,7 @@ def main() -> None:
     parser.add_argument("--confirm-test", action="store_true")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--rescore", type=Path, help="recompute metrics from a saved transcripts file (no LLM)")
+    parser.add_argument("--keys", help="post-test check: rerun only these test tickets (comma-separated)")
     args = parser.parse_args()
 
     if args.rescore:
@@ -371,7 +374,9 @@ def main() -> None:
         return
     if not args.split:
         parser.error("--split or --rescore is required")
-    if args.split == "test":
+    keys = [k.strip() for k in args.keys.split(",")] if args.keys else []
+    label = "posttest" if keys else args.split
+    if args.split == "test" and not keys:
         check_test_allowed("test", args.confirm_test, args.force, FINAL_CONFIG, RESULTS_DIR, prefix="e2e")
         if json.loads(FINAL_CONFIG.read_text())["git_commit"] != git_commit():
             raise SystemExit("HEAD differs from git_commit in eval/e2e_final_config.json: commit, then update it.")
@@ -381,6 +386,10 @@ def main() -> None:
 
     pipeline = Pipeline(load_components())
     recs = hidden_tickets(args.split)[: args.limit] if args.limit else hidden_tickets(args.split)
+    if keys:
+        recs = [r for r in recs if r["key"] in keys]
+        if len(recs) != len(keys):
+            raise SystemExit(f"Unknown keys for split {args.split}: {set(keys) - {r['key'] for r in recs}}")
     offset = llm.log_offset()
 
     def spent() -> float:
@@ -398,15 +407,16 @@ def main() -> None:
         t["sim_cost"] = round(costs.get((t["key"], t["policy"]), 0.0), 6)
     stamp = f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}"
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    tpath = RESULTS_DIR / f"e2e_transcripts_{args.split}_{stamp}.jsonl"
+    tpath = RESULTS_DIR / f"e2e_transcripts_{label}_{stamp}.jsonl"
     tpath.write_text("".join(json.dumps(t, ensure_ascii=False) + "\n" for t in transcripts), encoding="utf-8")
     metrics, scores = evaluate(transcripts, args.split)
     for p in POLICIES:
         sims = [t["sim_cost"] for t in transcripts if t["policy"] == p]
         metrics[p]["simulator_cost_per_ticket"] = round(sum(sims) / len(sims), 5) if sims else None
     data = {
-        "stage": "e2e",
+        "stage": "e2e" if not keys else "e2e_posttest",
         "split": args.split,
+        "keys": keys or None,
         "git_commit": git_commit(),
         "models": llm._settings().models,
         "prompts": {n: load_prompt(n).version for n in ("sim_opener", "sim_user")},
@@ -416,14 +426,30 @@ def main() -> None:
         "scores": scores,
         "transcripts": tpath.name,
     }
-    path = RESULTS_DIR / f"e2e_{args.split}_{stamp}.json"
+    path = RESULTS_DIR / f"e2e_{label}_{stamp}.json"
     path.write_text(json.dumps(data, indent=1, ensure_ascii=False))
-    rpath = RESULTS_DIR / f"e2e_review_{args.split}_{stamp}.md"
-    review(transcripts, scores, rpath)
+    rpath = RESULTS_DIR / f"e2e_review_{label}_{stamp}.md"
+    if not keys:
+        review(transcripts, scores, rpath)
     for p, m in metrics.items():
         print(f"  {p}: n={m['n']}; {fmt(m)}; simulator ${m['simulator_cost_per_ticket']}/ticket")
         print(f"     simulator: {json.dumps(m['simulator'])}")
     print(f"  spent ${data['spent']}\nWrote {path.relative_to(ROOT)}, {tpath.name}, {rpath.name}")
+    if keys:
+        with EVAL_REPORT.open("a", encoding="utf-8") as f:
+            for p, m in metrics.items():
+                row = [
+                    datetime.now(UTC).date().isoformat(),
+                    f"End-to-end POST-TEST check ({p})",
+                    f"rerun of {', '.join(keys)} only",
+                    fmt(m),
+                    f"{m['n']} dialogues",
+                    f"pipeline C1–C6 · simulator {llm._settings().models['simulator']}",
+                    f"{data['prompts']['sim_opener']} · {data['prompts']['sim_user']}",
+                    f"post-test robustness check, NOT the test result; commit {data['git_commit'][:7]}; {path.name}",
+                ]
+                f.write("| " + " | ".join(str(x) for x in row) + " |\n")
+        return
     if args.split != "test":
         return
     with EVAL_REPORT.open("a", encoding="utf-8") as f:

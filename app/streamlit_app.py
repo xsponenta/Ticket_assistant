@@ -150,7 +150,10 @@ with right:
             st.caption("No candidates left.")
 
     # 4. scope (C3, M3)
-    if s.c3:
+    if s.c3 and s.c3.get("failed"):
+        st.subheader("4 · Already supported?")
+        st.caption("The documentation check failed, so we continue to the ticket (see Trace).")
+    elif s.c3:
         st.subheader("4 · Already supported?")
         verdict = s.c3["verdict"].replace("_", " ")
         st.markdown(f"**{verdict}** — {s.c3['explanation']}")

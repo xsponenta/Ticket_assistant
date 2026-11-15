@@ -517,3 +517,15 @@ No evaluated prompt or config changed.
 | **Title icon 🐞** instead of 🎫. | 🎫 renders as "LIVE CONCERT TICKET" in macOS text-to-speech and tooltips. |
 
 Tests: `tests/test_pipeline.py::test_m6_pass1_never_alerts_and_confirmed_component_wins`; UI checked with `streamlit.testing.AppTest`.
+
+## E2 · End-to-end evaluation with a simulated user — 2026-11-15
+
+| Decision | Alternatives | Why |
+|---|---|---|
+| **Hidden tickets:** the 60 test `simulator_candidates` (15 per class). Gold fields = the ablation extractions (`gap_extractions.jsonl`, confirmed and grounded required fields of the gold class). Smoke: 5 val tickets. | New hand-written scenarios. | Real ticket language with an existing, spot-checked gold. These test tickets are used only here and in the ablation test. |
+| **Simulated user** (role simulator, `qwen/qwen3.5-27b`, reasoning off). The opener is written from the **summary only** (≤ 20 words; a deterministic leak check against the description, one regeneration). Answers: only what is asked, from the hidden ticket, "I don't know" otherwise. | Replaying the original description as the first message. | A real first message is vague; replaying the description would make every dialogue trivially complete. |
+| **`sim_user` v1 → v2** after the smoke run: v1 referred to "the ticket" / "my ticket" (3 of 8 answers). v2 frames the hidden text as "what you know" and forbids mentioning a ticket, Jira or notes. A deterministic `META_RE` check was added. | Keep v1. | A user without a ticket cannot cite one; meta mentions broke the role. After v2: 1 meta mention in 9 answers (an echo of the ticket's own words). |
+| **Simulator checks refined on the smoke transcripts** (scoring only): a broader "don't know" detector ("I don't have the …", "not available"); "answers when present" fails only on a pure "don't know", since a partial answer ("I don't know the version, but I built it with Maven") is correct behaviour. | Count any "don't know" phrase as a refusal. | The first version mislabelled correct partial answers. |
+| **Two policies:** auto (C1's top-1 class) and user-corrects (the simulated user confirms the gold class: the intended UX, M1). Both: top-1 component, dismiss nothing, continue on the scope stop, accept the assumptions. Policy auto runs first; corrects reuses its cache, so **latency and cost come from auto only**. | One policy. | auto measures C1's real cost to the dialogue; corrects measures the product as designed. |
+| **Field text recall** is compared with the gold extraction's concise `value` (primary) and with its verbatim quotes (secondary, stricter: quotes are often whole code blocks). The match is lexical (no stemming). | Quotes only. | Quotes made recall structurally low (0.40–0.45 on smoke) even for correct fields. |
+| Code at **commit `d4c9892`** (recorded in `eval/e2e_final_config.json`; M6 fixes in `9dc7e65`); the test run checks that HEAD matches. | — | Reproducibility. |

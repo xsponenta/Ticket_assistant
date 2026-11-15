@@ -781,3 +781,76 @@ stateDiagram-v2
   - session cost about $0.001;
   - per step: C4 about 2–3 s, C5 about 2 s, C6 about 1.8 s, C2 50–200 ms, C1 under 10 ms;
   - first app start about 25 s (C1 fit and embedder load).
+
+## End-to-end evaluation (simulated user; decision E2)
+
+**Setup:**
+- **The dialogues:** 60 hidden test tickets (15 per class), each talking to the **real pipeline** through the headless driver, with code at commit `d4c9892` (`eval/e2e_final_config.json`).
+- **The simulated user** (`qwen/qwen3.5-27b`, reasoning off):
+  - **Opener:** one vague sentence from the summary only. A deterministic leak check found 0 leaks.
+  - **Answers:** what is asked, from the hidden ticket (`sim_user/v2`), with "I don't know" otherwise.
+- **Gold:** the ablation extractions (confirmed and grounded required fields).
+- **Policies:**
+  - **auto:** C1's top-1 class;
+  - **corrects:** the user confirms the gold class, the intended UX (M1).
+- **Saved outputs:** results `eval/results/e2e_test_20261115T181923Z.json`, transcripts `e2e_transcripts_test_20261115T181923Z.jsonl`, and 5 transcripts for manual review in `e2e_review_test_20261115T181923Z.md`.
+- **Smoke:** 5 val tickets, `e2e_smoke_20261115T181324Z.json`.
+
+| Metric (60 dialogues) | auto | **corrects** | B1 target |
+|---|---:|---:|---:|
+| Completion (ticket produced) [95% CI] | 0.983 [0.95–1.00] | **0.983** [0.95–1.00] | — |
+| **Required-field recovery** (gold-confirmed fields rendered with content) | 0.458 [0.33–0.59] | **0.954** [0.91–0.99] | ≥ 0.90 ✅ (corrects) |
+| Content-word recall vs the gold value (lexical) / vs the gold quotes | 0.450 / 0.304 | 0.428 / 0.304 | ≥ 0.80 ❌ (see analysis) |
+| Confirmed values grounded in the simulator's turns | 0.910 | **0.920** | — |
+| Invented tokens vs the conversation / **vs the hidden ticket** | 0.016 / 0.033 | 0.015 / **0.015** | ≤ 5% ✅ |
+| Tickets with ≥ 1 fact not in the hidden ticket | 0.067 | 0.033 | — |
+| User turns typed (opener + answers); share ≤ 4 | 2.43; 1.00 | **2.28; 1.00** | ≤ 4 ✅ |
+| Clicks (confirm class / assumptions / scope) | 1.32 | 1.38 | — |
+| **Bug tickets with all 4 elements** | 0.533 | **0.800** (12 / 15) | ≥ 0.90 ❌; SPARK history 3.4% |
+| — bugs whose hidden ticket states all 4 | 4 / 7 | **6 / 7** | |
+| C1 class on the opener: top-1 / top-2 | 0.433 / 0.600 | (user picks) | — |
+| System cost per ticket (uncached, auto) | **$0.0013** | — | ≤ $0.01 ✅ |
+| Latency per turn p50 / p95 (auto) | **2.6 s / 6.9 s** | — | ≤ 8 s ✅ |
+| Simulator cost per ticket | $0.0007 | (cached prefix) | — |
+
+**Simulator behaviour** (corrects; 77 answers):
+- ≤ 2 sentences: 0.987;
+- gives content when the field is in the hidden ticket: 1.000 (n = 29);
+- "don't know" when it is absent: 0.417 (n = 24; see below);
+- AI mentions 0 (1 in auto); meta mentions ("the ticket") 1 (3 in auto); opener leaks 0.
+
+**Reading against the business targets:**
+- **With the intended UX** (the user confirms the type), the assistant recovers **95% of the required information** present in the hidden ticket. It does so in **2.3 typed turns**, for **$0.0013 and under 7 s per turn at p95**, and only 1.5% of the risky tokens are facts not in the hidden ticket.
+- **Bug structure:** 80% of the bug tickets have all four elements (steps, expected, actual, environment), against **3.4%** in SPARK history. That is below the 90% target. In 2 of the 3 misses the environment is not in the hidden ticket at all, so "Unknown (reporter)" is the correct output; when the hidden ticket states all four, 6 of 7 come out complete.
+- **The auto policy shows why the user must confirm the type** (M1). On a one-sentence opener C1 is right 43% of the time (60% top-2); 13 of 15 ideas become "feature" and lose their idea fields (recovery 0.0 for ideas).
+
+### End-to-end error analysis (all incomplete outcomes)
+1. **Failed dialogues (1 per policy): a C3 schema failure.**
+   - SPARK-19469 (corrects) and SPARK-3833 (auto): the generator answered `already_supported` without a `doc_reference`, twice, so the validator rejected it. This is the same failure as SPARK-31302 in the C3 test.
+   - The pipeline kept the state and reported the error (graceful failure works), but the driver stops on an error, so no ticket was produced.
+   - **Hypothesis:** a C3 failure should not block the ticket. Under M3, any outcome except a grounded `already_supported` means "continue". **Proposed fix (M7, not applied):** treat a C3 failure as "no stop offered" and continue to C6. It would not change any evaluated config, but it is a post-test change, so it needs your approval.
+2. **Unrecovered gold fields under corrects (5 + the failed dialogue): the simulator said "I don't know" although the hidden ticket has the information.**
+   - SPARK-36669 steps ("I don't have the specific code", but the ticket names the Lz4 Parquet codec);
+   - SPARK-32731 / SPARK-42418 definition_of_done;
+   - SPARK-27170 expected_impact;
+   - SPARK-36669 environment.
+   - **Simulator under-recall, not a system error.** The system asked about every one of these fields, and rendered "Unknown (reporter)" as specified.
+3. **Low content-word recall (0.43; 36% of fields ≥ 0.5): partly the metric, partly real detail loss.**
+   - **Paraphrase:** SPARK-12677 and SPARK-3833 render the same facts in other words; the lexical match does not stem or know synonyms.
+   - **Real detail loss:** the 1–2-sentence answers and C6's condensing drop specifics, e.g. SPARK-31788's expected output list, SPARK-38039's exact SQL, the stack-trace location.
+   - **Trade-off:** short answers keep the dialogue cheap and in role, but the ticket is less detailed than a hand-written one with the same facts.
+4. **Simulator honesty: "don't know" when the field is absent only 0.42 (corrects) / 0.56 (auto).**
+   - Most such answers give an *implied* answer, e.g. "I expected the shell to start" (SPARK-33997).
+   - One auto dialogue invented details: SPARK-10658 (`sc.addJar`, `sqlContext.load(...)`). The system's "invented vs the hidden ticket" rate counts this against the pipeline, so 0.033 (auto) is an upper bound for system invention.
+5. **Invented by the system** (vs the conversation; corrects 2 tokens): `spark.streaming.stopGracefullyOnShutdown=true` (SPARK-33121, a reformatting of "set to true", as on C6 dev) and `DataFrame.explainString` (SPARK-45782, an over-qualified method name).
+6. **C2 pass-2 alert in 51–55 of 59 dialogues: an artefact of the setup, not a false-alarm rate.**
+   - The hidden test tickets are in C2's corpus, and in 56–57 of 59 dialogues the top-1 candidate **is the hidden ticket itself**. Only 1 alert per policy pointed to another issue.
+   - **What it does show:** the composed ticket is close enough to the original that C2 retrieves it at rank 1 in 95% of dialogues, an independent signal of faithfulness.
+   - **What it does not show:** a production false-alarm rate; the C2 test result (0.20–0.25) stays the reference.
+
+**3 worst transcripts:**
+- **SPARK-19469:** the C3 failure, so no ticket.
+- **SPARK-10658 (auto):** the simulator invented API calls.
+- **An idea under auto,** e.g. SPARK-44646: classified as feature, so the idea fields (problem, users, impact) were never collected.
+
+All 5 review transcripts (one per class plus the worst) are in `e2e_review_test_20261115T181923Z.md` for the user's manual check.

@@ -213,3 +213,19 @@ def test_m6_pass1_never_alerts_and_confirmed_component_wins():
         s = p.answer(s, "detail")
         assert s.field_states["component"]["value"] == "SQL, PySpark"
     assert s.c2_pass2["alert"] is True and s.ticket["component"] == ["SQL", "PySpark"]
+
+
+def test_m7_failed_scope_check_continues_to_the_ticket():
+    world = World("feature")
+
+    def broken_scope(summary, description, session_id=None):
+        raise ValueError("doc_reference is required when verdict is already_supported")
+
+    world.check_scope = broken_scope
+    p = Pipeline(world.components())
+    s = p.confirm_class(p.start(p.new_session(), "Please add X"), "feature", ["SQL"])
+    while s.stage == "asking":
+        s = p.answer(s, "detail")
+    assert s.last_error is None and s.ticket is not None and s.stage in ("confirm_assumptions", "done")
+    assert s.c3["failed"] and "doc_reference" in s.c3["error"] and not s.scope_stop_offered
+    assert any(e.step == "C3" and e.error for e in s.trace)

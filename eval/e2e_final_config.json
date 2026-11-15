@@ -1,0 +1,18 @@
+{
+  "approved_at": "2026-11-15",
+  "approved_by": "user",
+  "git_commit": "d4c9892c1577f90458f5900eeadbbf3a15109ab7",
+  "m6_commit": "9dc7e65f484be4db12927fb8a15a8318e5d036e5",
+  "smoke": "eval/results/e2e_smoke_20261115T181324Z.json",
+  "hidden_tickets": "data/eval/gap_extractions.jsonl (split test: the 60 simulator_candidates)",
+  "policies": ["auto", "corrects"],
+  "simulator": {"role": "simulator", "prompts": ["sim_opener/v1", "sim_user/v2"]},
+  "components": {
+    "c1": "eval/c1_final_config.json (baseline, M1)",
+    "c2": "eval/c2_final_config.json (dense; pass 1 never alerts, M6)",
+    "c3": "eval/c3_final_config.json (dense k=8, M3)",
+    "c4": "eval/c4_final_config.json (c4_gap/v2)",
+    "c5": "eval/c5_final_config.json (c5_questions/v1)",
+    "c6": "eval/c6_final_config.json (c6_compose/v1)"
+  }
+}

@@ -11,7 +11,8 @@ Stages: intake -> confirm_class -> asking* -> [scope_decision] -> confirm_assump
 Every user action runs the automatic steps up to the next user input ("segments"):
 - classify: C1 (baseline, top-2 classes, top-3 components; M1) + C2 pass 1 (summary-only threshold; M2);
 - gather:   C4 -> C5 while class fields are missing, < MAX_TURNS question turns and the user did not "skip";
-- scope:    C3 for feature/task/idea; a stop is offered only for a grounded already_supported (M3);
+- scope:    C3 for feature/task/idea; a stop is offered only for a grounded already_supported (M3); a failed C3
+            call continues to the ticket (M7);
 - compose:  C2 pass 2 (full threshold, dismissed candidates removed) -> C6; assumed fields go to the user (M4).
 A failing step is recorded in the trace and `last_error`; the stage does not change and `retry()` reruns the segment.
 """
@@ -238,14 +239,19 @@ class Pipeline:
         if state.ticket_class not in SCOPE_CLASSES:
             return self._compose(state)
         summary, description = self._request(state)
-        out, chunks = self._step(
-            state,
-            "C3",
-            "scope checker",
-            summary,
-            lambda sid: self.c.check_scope(summary, description, session_id=sid),
-            llm_step=True,
-        )
+        try:
+            out, chunks = self._step(
+                state,
+                "C3",
+                "scope checker",
+                summary,
+                lambda sid: self.c.check_scope(summary, description, session_id=sid),
+                llm_step=True,
+            )
+        except StepFailed:  # M7: C3 is advisory; a failed check means "continue to the ticket" (as in M3)
+            state.c3 = {"failed": True, "error": state.last_error["message"]}
+            state.last_error = None  # the failure stays in the trace, but it does not block the dialogue
+            return self._compose(state)
         grounded = out.verdict == "already_supported" and reference_grounded(
             out.doc_reference, [c["text"] for c in chunks]
         )
