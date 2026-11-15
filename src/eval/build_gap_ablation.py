@@ -25,7 +25,7 @@ from typing import Any
 import pandas as pd
 
 from src import llm
-from src.eval.ablation import ABLATION, EXTRACTIONS, META, items_sha256
+from src.eval.ablation import ABLATION, DESC_CHARS, EXTRACTIONS, META, items_sha256, ticket_text
 from src.eval.run_log import Budget
 from src.eval.spans import delete_spans, find_spans, merge_spans, overlaps
 from src.prompting import load_prompt
@@ -38,7 +38,7 @@ from build_eval import SIMULATOR_CAP, SIMULATOR_MIN_WORDS, bug_signals, n_words,
 
 EVAL = ROOT / "data" / "eval"
 RESULTS_DIR = ROOT / "eval" / "results"
-DESC_CHARS, MIN_DESC_WORDS, SEED, WORKERS = 4000, 20, 42, 6
+MIN_DESC_WORDS, SEED, WORKERS = 20, 42, 6
 MAX_TOKENS = 4000  # caps a runaway generation (one smoke call produced 131k tokens, $0.07)
 UNKNOWN_REPLIES = ("I don't know.", "Sorry, I can't provide that.", "No idea, I don't have that information.")
 
@@ -52,10 +52,6 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
-
-
-def ticket_text(summary: str, description: str) -> str:
-    return f"Summary: {summary.strip()}\n\nDescription:\n{(description or '')[:DESC_CHARS].strip()}"
 
 
 def description_words(text: str) -> int:

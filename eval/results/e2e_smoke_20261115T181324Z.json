@@ -1,0 +1,1016 @@
+{
+ "stage": "e2e",
+ "split": "smoke",
+ "git_commit": "9dc7e65f484be4db12927fb8a15a8318e5d036e5",
+ "models": {
+  "generator": "deepseek/deepseek-v4.1-flash-1017",
+  "judge": "google/gemini-3.5-flash-lite",
+  "simulator": "qwen/qwen3.5-27b",
+  "embedder": "BAAI/bge-small-en-v1.5"
+ },
+ "prompts": {
+  "sim_opener": "sim_opener/v1",
+  "sim_user": "sim_user/v2"
+ },
+ "n_tickets": 5,
+ "spent": 0.0105,
+ "metrics": {
+  "auto": {
+   "n": 5,
+   "completion": {
+    "value": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ],
+    "n": 5
+   },
+   "user_turns": {
+    "value": 2.8,
+    "ci95": [
+     2.2,
+     3.4
+    ],
+    "n": 5
+   },
+   "user_turns_le_target": {
+    "value": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ],
+    "n": 5
+   },
+   "clicks": {
+    "value": 1.4,
+    "ci95": [
+     1.0,
+     1.8
+    ],
+    "n": 5
+   },
+   "field_recovery": {
+    "value": 0.636,
+    "ci95": [
+     0.222,
+     0.923
+    ],
+    "n": 5
+   },
+   "content_recall": {
+    "value": 0.611,
+    "ci95": [
+     0.438,
+     0.785
+    ],
+    "n": 7
+   },
+   "content_recall_vs_quotes": {
+    "value": 0.487,
+    "ci95": [
+     0.263,
+     0.712
+    ],
+    "n": 7
+   },
+   "grounded_confirmed": {
+    "value": 0.846,
+    "ci95": [
+     0.615,
+     1.0
+    ],
+    "n": 13
+   },
+   "invented_vs_conversation": 0.0,
+   "invented_vs_ticket": 0.0,
+   "tickets_with_invented_fact": {
+    "value": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 5
+   },
+   "class_top1": {
+    "value": 0.8,
+    "ci95": [
+     0.4,
+     1.0
+    ],
+    "n": 5
+   },
+   "class_top2": {
+    "value": 0.8,
+    "ci95": [
+     0.4,
+     1.0
+    ],
+    "n": 5
+   },
+   "bug_all_four": {
+    "value": 0.5,
+    "ci95": [
+     0.0,
+     1.0
+    ],
+    "n": 2
+   },
+   "system_cost_per_ticket": 0.00117,
+   "latency_turn_p50_ms": 245.1,
+   "latency_turn_p95_ms": 7595.9,
+   "question_turns": {
+    "value": 1.8,
+    "ci95": [
+     1.2,
+     2.4
+    ],
+    "n": 5
+   },
+   "turn_cap_hit": 0,
+   "c3_stop_offered": 0,
+   "c2_pass2_alerts": 4,
+   "errors": {},
+   "per_class": {
+    "bug": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 2
+     },
+     "field_recovery": {
+      "value": 0.833,
+      "ci95": [
+       0.667,
+       1.0
+      ],
+      "n": 2
+     }
+    },
+    "feature": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     }
+    },
+    "task": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "n": 1
+     }
+    },
+    "idea": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "n": 1
+     }
+    }
+   },
+   "simulator": {
+    "answers": 9,
+    "le_2_sentences": {
+     "value": 1.0,
+     "ci95": [
+      1.0,
+      1.0
+     ],
+     "n": 9
+    },
+    "dont_know_when_absent": {
+     "value": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n": 3
+    },
+    "answers_when_present": {
+     "value": 0.75,
+     "ci95": [
+      0.25,
+      1.0
+     ],
+     "n": 4
+    },
+    "ai_mentions": 0,
+    "meta_mentions": 1,
+    "opener_leaks": 0
+   },
+   "simulator_cost_per_ticket": 0.00076
+  },
+  "corrects": {
+   "n": 5,
+   "completion": {
+    "value": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ],
+    "n": 5
+   },
+   "user_turns": {
+    "value": 2.8,
+    "ci95": [
+     2.2,
+     3.4
+    ],
+    "n": 5
+   },
+   "user_turns_le_target": {
+    "value": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ],
+    "n": 5
+   },
+   "clicks": {
+    "value": 1.4,
+    "ci95": [
+     1.0,
+     1.8
+    ],
+    "n": 5
+   },
+   "field_recovery": {
+    "value": 0.818,
+    "ci95": [
+     0.571,
+     1.0
+    ],
+    "n": 5
+   },
+   "content_recall": {
+    "value": 0.539,
+    "ci95": [
+     0.378,
+     0.716
+    ],
+    "n": 9
+   },
+   "content_recall_vs_quotes": {
+    "value": 0.423,
+    "ci95": [
+     0.248,
+     0.636
+    ],
+    "n": 9
+   },
+   "grounded_confirmed": {
+    "value": 0.923,
+    "ci95": [
+     0.769,
+     1.0
+    ],
+    "n": 13
+   },
+   "invented_vs_conversation": 0.0,
+   "invented_vs_ticket": 0.0,
+   "tickets_with_invented_fact": {
+    "value": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 5
+   },
+   "class_top1": {
+    "value": 0.8,
+    "ci95": [
+     0.4,
+     1.0
+    ],
+    "n": 5
+   },
+   "class_top2": {
+    "value": 0.8,
+    "ci95": [
+     0.4,
+     1.0
+    ],
+    "n": 5
+   },
+   "bug_all_four": {
+    "value": 0.5,
+    "ci95": [
+     0.0,
+     1.0
+    ],
+    "n": 2
+   },
+   "system_cost_per_ticket": "see auto",
+   "latency_turn_p50_ms": "see auto",
+   "latency_turn_p95_ms": "see auto",
+   "question_turns": {
+    "value": 1.8,
+    "ci95": [
+     1.2,
+     2.4
+    ],
+    "n": 5
+   },
+   "turn_cap_hit": 0,
+   "c3_stop_offered": 0,
+   "c2_pass2_alerts": 4,
+   "errors": {},
+   "per_class": {
+    "bug": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 2
+     },
+     "field_recovery": {
+      "value": 0.833,
+      "ci95": [
+       0.667,
+       1.0
+      ],
+      "n": 2
+     }
+    },
+    "feature": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     }
+    },
+    "task": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "n": 1
+     }
+    },
+    "idea": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     }
+    }
+   },
+   "simulator": {
+    "answers": 9,
+    "le_2_sentences": {
+     "value": 1.0,
+     "ci95": [
+      1.0,
+      1.0
+     ],
+     "n": 9
+    },
+    "dont_know_when_absent": {
+     "value": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "n": 2
+    },
+    "answers_when_present": {
+     "value": 0.8,
+     "ci95": [
+      0.4,
+      1.0
+     ],
+     "n": 5
+    },
+    "ai_mentions": 0,
+    "meta_mentions": 0,
+    "opener_leaks": 0
+   },
+   "simulator_cost_per_ticket": 6e-05
+  }
+ },
+ "scores": [
+  {
+   "key": "SPARK-36874",
+   "policy": "auto",
+   "gold_class": "bug",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 2,
+   "question_turns": 2,
+   "gold_required": 3,
+   "recovered": 3,
+   "recall": [
+    0.7894736842105263,
+    0.3076923076923077,
+    0.7272727272727273
+   ],
+   "recall_quotes": [
+    0.8,
+    0.09803921568627451,
+    1.0
+   ],
+   "grounded": [
+    true,
+    true,
+    true,
+    false
+   ],
+   "risky": 5,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": true,
+   "system_cost": 0.001016,
+   "turn_latency_ms": [
+    243.3,
+    21.2,
+    3568.1,
+    7407.099999999999
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false,
+     "meta_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false,
+     "meta_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-36874",
+   "policy": "corrects",
+   "gold_class": "bug",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 2,
+   "question_turns": 2,
+   "gold_required": 3,
+   "recovered": 3,
+   "recall": [
+    0.7894736842105263,
+    0.3076923076923077,
+    0.7272727272727273
+   ],
+   "recall_quotes": [
+    0.8,
+    0.09803921568627451,
+    1.0
+   ],
+   "grounded": [
+    true,
+    true,
+    true,
+    false
+   ],
+   "risky": 5,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": true,
+   "system_cost": 0.0,
+   "turn_latency_ms": [
+    24.6,
+    2.4000000000000004,
+    1.8,
+    26.5
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false,
+     "meta_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false,
+     "meta_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-34378",
+   "policy": "auto",
+   "gold_class": "feature",
+   "completed": true,
+   "error": null,
+   "user_turns": 2,
+   "clicks": 1,
+   "question_turns": 1,
+   "gold_required": 2,
+   "recovered": 2,
+   "recall": [
+    0.4090909090909091,
+    0.29411764705882354
+   ],
+   "recall_quotes": [
+    0.2894736842105263,
+    0.13043478260869565
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 0,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": null,
+   "system_cost": 0.001694,
+   "turn_latency_ms": [
+    244.9,
+    22.6,
+    7595.9
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false,
+     "meta_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-34378",
+   "policy": "corrects",
+   "gold_class": "feature",
+   "completed": true,
+   "error": null,
+   "user_turns": 2,
+   "clicks": 1,
+   "question_turns": 1,
+   "gold_required": 2,
+   "recovered": 2,
+   "recall": [
+    0.4090909090909091,
+    0.29411764705882354
+   ],
+   "recall_quotes": [
+    0.2894736842105263,
+    0.13043478260869565
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 0,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": null,
+   "system_cost": 0.0,
+   "turn_latency_ms": [
+    27.700000000000003,
+    2.8,
+    29.0
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false,
+     "meta_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-32072",
+   "policy": "auto",
+   "gold_class": "task",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 1,
+   "question_turns": 2,
+   "gold_required": 1,
+   "recovered": 0,
+   "recall": [],
+   "recall_quotes": [],
+   "grounded": [],
+   "risky": 1,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": null,
+   "system_cost": 0.0010609999999999999,
+   "turn_latency_ms": [
+    245.1,
+    21.4,
+    1709.5,
+    5951.900000000001
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": false,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": true,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false,
+     "meta_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": true,
+     "all_present": false,
+     "ai_mention": false,
+     "meta_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-32072",
+   "policy": "corrects",
+   "gold_class": "task",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 1,
+   "question_turns": 2,
+   "gold_required": 1,
+   "recovered": 0,
+   "recall": [],
+   "recall_quotes": [],
+   "grounded": [],
+   "risky": 1,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": null,
+   "system_cost": 0.0,
+   "turn_latency_ms": [
+    21.9,
+    2.6,
+    1.6,
+    32.900000000000006
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": false,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": true,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false,
+     "meta_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": true,
+     "all_present": false,
+     "ai_mention": false,
+     "meta_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-53903",
+   "policy": "auto",
+   "gold_class": "idea",
+   "completed": true,
+   "error": null,
+   "user_turns": 2,
+   "clicks": 2,
+   "question_turns": 1,
+   "gold_required": 2,
+   "recovered": 0,
+   "recall": [],
+   "recall_quotes": [],
+   "grounded": [
+    true,
+    true,
+    false
+   ],
+   "risky": 0,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": false,
+   "class_top2": false,
+   "bug_all_four": null,
+   "system_cost": 0.000578,
+   "turn_latency_ms": [
+    244.7,
+    22.9,
+    2785.0
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": true,
+     "all_present": false,
+     "ai_mention": false,
+     "meta_mention": true
+    }
+   ]
+  },
+  {
+   "key": "SPARK-53903",
+   "policy": "corrects",
+   "gold_class": "idea",
+   "completed": true,
+   "error": null,
+   "user_turns": 2,
+   "clicks": 2,
+   "question_turns": 1,
+   "gold_required": 2,
+   "recovered": 2,
+   "recall": [
+    0.23529411764705882,
+    0.3333333333333333
+   ],
+   "recall_quotes": [
+    0.125,
+    0.27586206896551724
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 4,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": false,
+   "class_top2": false,
+   "bug_all_four": null,
+   "system_cost": 0.000559,
+   "turn_latency_ms": [
+    13.7,
+    2.4,
+    6552.099999999999
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false,
+     "meta_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-33997",
+   "policy": "auto",
+   "gold_class": "bug",
+   "completed": true,
+   "error": null,
+   "user_turns": 4,
+   "clicks": 1,
+   "question_turns": 3,
+   "gold_required": 3,
+   "recovered": 2,
+   "recall": [
+    0.8888888888888888,
+    0.8636363636363636
+   ],
+   "recall_quotes": [
+    0.6153846153846154,
+    0.47619047619047616
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 7,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": false,
+   "system_cost": 0.001509,
+   "turn_latency_ms": [
+    9.6,
+    1.7000000000000002,
+    4013.6000000000004,
+    4957.0,
+    3843.2000000000003
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false,
+     "meta_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": true,
+     "all_present": false,
+     "ai_mention": false,
+     "meta_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": true,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false,
+     "meta_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-33997",
+   "policy": "corrects",
+   "gold_class": "bug",
+   "completed": true,
+   "error": null,
+   "user_turns": 4,
+   "clicks": 1,
+   "question_turns": 3,
+   "gold_required": 3,
+   "recovered": 2,
+   "recall": [
+    0.8888888888888888,
+    0.8636363636363636
+   ],
+   "recall_quotes": [
+    0.6153846153846154,
+    0.47619047619047616
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 7,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": false,
+   "system_cost": 0.0,
+   "turn_latency_ms": [
+    47.5,
+    3.9000000000000004,
+    2.2,
+    1.4,
+    22.8
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false,
+     "meta_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": true,
+     "all_present": false,
+     "ai_mention": false,
+     "meta_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": true,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false,
+     "meta_mention": false
+    }
+   ]
+  }
+ ],
+ "transcripts": "e2e_transcripts_smoke_20261115T181324Z.jsonl"
+}

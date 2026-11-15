@@ -60,6 +60,8 @@ STOPWORDS = set(
     how do does did have has had also just only all any some such than too very via per so then while given""".split()
 )
 TOKEN_RE = re.compile(r"[a-z0-9_]+")
+# Generic Spark nouns are not invented details (CamelCase would flag them when the user wrote "df" or "pyspark shell").
+GENERIC_TERMS = {"DataFrame", "DataFrames", "Dataset", "Datasets", "PySpark", "SparkSession", "SparkContext", "SparkR"}
 RISKY_PATTERNS = [
     re.compile(r"`([^`\s]{2,80})`"),  # backticked identifiers / config / flags (no whitespace: never prose)
     re.compile(r"\bspark\.[A-Za-z0-9_.]*[A-Za-z0-9_]"),  # config keys

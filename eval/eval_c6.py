@@ -30,7 +30,7 @@ from src.eval.ablation import load_items, user_text  # noqa: E402
 from src.eval.lock import check_test_allowed  # noqa: E402
 from src.eval.metrics import bootstrap_mean_ci  # noqa: E402
 from src.eval.run_log import Budget, call_metrics, paid_calls, read_lines  # noqa: E402
-from src.eval.spans import content_word_share, invented_tokens, quote_grounded, risky_tokens  # noqa: E402
+from src.eval.spans import GENERIC_TERMS, content_word_share, invented_tokens, quote_grounded, risky_tokens  # noqa: E402
 from src.prompting import load_prompt  # noqa: E402
 from src.schemas.c1 import TOP_COMPONENTS  # noqa: E402
 from src.schemas.c6 import UNKNOWN_TEXT  # noqa: E402
@@ -48,8 +48,6 @@ LABEL_CUES = {
     "data-loss": re.compile(r"data[ -]loss|lost data|data is lost|losing data", re.I),
 }
 CRITERIA_FIELDS = {"feature": "acceptance_criteria", "task": "definition_of_done"}
-# Generic Spark nouns are not invented details (CamelCase would flag them when the user wrote "df" or "pyspark shell").
-GENERIC_TERMS = {"DataFrame", "DataFrames", "Dataset", "Datasets", "PySpark", "SparkSession", "SparkContext", "SparkR"}
 
 
 def jira_components(keys: set[str]) -> dict[str, list[str]]:

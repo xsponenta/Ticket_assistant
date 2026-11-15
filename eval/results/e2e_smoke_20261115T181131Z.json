@@ -1,0 +1,943 @@
+{
+ "stage": "e2e",
+ "split": "smoke",
+ "git_commit": "9dc7e65f484be4db12927fb8a15a8318e5d036e5",
+ "models": {
+  "generator": "deepseek/deepseek-v4.1-flash-1017",
+  "judge": "google/gemini-3.5-flash-lite",
+  "simulator": "qwen/qwen3.5-27b",
+  "embedder": "BAAI/bge-small-en-v1.5"
+ },
+ "prompts": {
+  "sim_opener": "sim_opener/v1",
+  "sim_user": "sim_user/v1"
+ },
+ "n_tickets": 5,
+ "spent": 0.0118,
+ "metrics": {
+  "auto": {
+   "n": 5,
+   "completion": {
+    "value": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ],
+    "n": 5
+   },
+   "user_turns": {
+    "value": 2.6,
+    "ci95": [
+     2.2,
+     3.0
+    ],
+    "n": 5
+   },
+   "user_turns_le_target": {
+    "value": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ],
+    "n": 5
+   },
+   "clicks": {
+    "value": 1.4,
+    "ci95": [
+     1.0,
+     1.8
+    ],
+    "n": 5
+   },
+   "field_recovery": {
+    "value": 0.727,
+    "ci95": [
+     0.364,
+     1.0
+    ],
+    "n": 5
+   },
+   "content_recall": {
+    "value": 0.445,
+    "ci95": [
+     0.328,
+     0.543
+    ],
+    "n": 8
+   },
+   "grounded_confirmed": {
+    "value": 0.875,
+    "ci95": [
+     0.688,
+     1.0
+    ],
+    "n": 16
+   },
+   "invented_vs_conversation": 0.0,
+   "invented_vs_ticket": 0.0,
+   "tickets_with_invented_fact": {
+    "value": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 5
+   },
+   "class_top1": {
+    "value": 0.8,
+    "ci95": [
+     0.4,
+     1.0
+    ],
+    "n": 5
+   },
+   "class_top2": {
+    "value": 0.8,
+    "ci95": [
+     0.4,
+     1.0
+    ],
+    "n": 5
+   },
+   "bug_all_four": {
+    "value": 0.5,
+    "ci95": [
+     0.0,
+     1.0
+    ],
+    "n": 2
+   },
+   "system_cost_per_ticket": 0.00129,
+   "latency_turn_p50_ms": 2986.5,
+   "latency_turn_p95_ms": 5954.3,
+   "question_turns": {
+    "value": 1.6,
+    "ci95": [
+     1.2,
+     2.0
+    ],
+    "n": 5
+   },
+   "turn_cap_hit": 0,
+   "c3_stop_offered": 0,
+   "c2_pass2_alerts": 5,
+   "errors": {},
+   "per_class": {
+    "bug": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 2
+     },
+     "field_recovery": {
+      "value": 0.833,
+      "ci95": [
+       0.667,
+       1.0
+      ],
+      "n": 2
+     }
+    },
+    "feature": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     }
+    },
+    "task": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     }
+    },
+    "idea": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "n": 1
+     }
+    }
+   },
+   "simulator": {
+    "answers": 8,
+    "le_2_sentences": {
+     "value": 1.0,
+     "ci95": [
+      1.0,
+      1.0
+     ],
+     "n": 8
+    },
+    "dont_know_when_absent": {
+     "value": 0.5,
+     "ci95": [
+      0.0,
+      1.0
+     ],
+     "n": 2
+    },
+    "answers_when_present": {
+     "value": 1.0,
+     "ci95": [
+      1.0,
+      1.0
+     ],
+     "n": 3
+    },
+    "ai_mentions": 0,
+    "opener_leaks": 0
+   },
+   "simulator_cost_per_ticket": 0.00076
+  },
+  "corrects": {
+   "n": 5,
+   "completion": {
+    "value": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ],
+    "n": 5
+   },
+   "user_turns": {
+    "value": 2.6,
+    "ci95": [
+     2.2,
+     3.0
+    ],
+    "n": 5
+   },
+   "user_turns_le_target": {
+    "value": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ],
+    "n": 5
+   },
+   "clicks": {
+    "value": 1.4,
+    "ci95": [
+     1.0,
+     1.8
+    ],
+    "n": 5
+   },
+   "field_recovery": {
+    "value": 0.909,
+    "ci95": [
+     0.769,
+     1.0
+    ],
+    "n": 5
+   },
+   "content_recall": {
+    "value": 0.398,
+    "ci95": [
+     0.289,
+     0.491
+    ],
+    "n": 10
+   },
+   "grounded_confirmed": {
+    "value": 0.875,
+    "ci95": [
+     0.688,
+     1.0
+    ],
+    "n": 16
+   },
+   "invented_vs_conversation": 0.0,
+   "invented_vs_ticket": 0.0,
+   "tickets_with_invented_fact": {
+    "value": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "n": 5
+   },
+   "class_top1": {
+    "value": 0.8,
+    "ci95": [
+     0.4,
+     1.0
+    ],
+    "n": 5
+   },
+   "class_top2": {
+    "value": 0.8,
+    "ci95": [
+     0.4,
+     1.0
+    ],
+    "n": 5
+   },
+   "bug_all_four": {
+    "value": 0.5,
+    "ci95": [
+     0.0,
+     1.0
+    ],
+    "n": 2
+   },
+   "system_cost_per_ticket": 0.00022,
+   "latency_turn_p50_ms": 20.1,
+   "latency_turn_p95_ms": 8919.8,
+   "question_turns": {
+    "value": 1.6,
+    "ci95": [
+     1.2,
+     2.0
+    ],
+    "n": 5
+   },
+   "turn_cap_hit": 0,
+   "c3_stop_offered": 0,
+   "c2_pass2_alerts": 5,
+   "errors": {},
+   "per_class": {
+    "bug": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 2
+     },
+     "field_recovery": {
+      "value": 0.833,
+      "ci95": [
+       0.667,
+       1.0
+      ],
+      "n": 2
+     }
+    },
+    "feature": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     }
+    },
+    "task": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     }
+    },
+    "idea": {
+     "completion": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     },
+     "field_recovery": {
+      "value": 1.0,
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "n": 1
+     }
+    }
+   },
+   "simulator": {
+    "answers": 8,
+    "le_2_sentences": {
+     "value": 1.0,
+     "ci95": [
+      1.0,
+      1.0
+     ],
+     "n": 8
+    },
+    "dont_know_when_absent": {
+     "value": 1.0,
+     "ci95": [
+      1.0,
+      1.0
+     ],
+     "n": 1
+    },
+    "answers_when_present": {
+     "value": 1.0,
+     "ci95": [
+      1.0,
+      1.0
+     ],
+     "n": 4
+    },
+    "ai_mentions": 0,
+    "opener_leaks": 0
+   },
+   "simulator_cost_per_ticket": 8e-05
+  }
+ },
+ "scores": [
+  {
+   "key": "SPARK-36874",
+   "policy": "auto",
+   "gold_class": "bug",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 2,
+   "question_turns": 2,
+   "gold_required": 3,
+   "recovered": 3,
+   "recall": [
+    0.55,
+    0.11764705882352941,
+    0.5
+   ],
+   "grounded": [
+    true,
+    true,
+    true,
+    false
+   ],
+   "risky": 11,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": true,
+   "system_cost": 0.001624,
+   "turn_latency_ms": [
+    11.2,
+    3020.0,
+    2325.6000000000004,
+    4532.6
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-36874",
+   "policy": "corrects",
+   "gold_class": "bug",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 2,
+   "question_turns": 2,
+   "gold_required": 3,
+   "recovered": 3,
+   "recall": [
+    0.55,
+    0.11764705882352941,
+    0.5
+   ],
+   "grounded": [
+    true,
+    true,
+    true,
+    false
+   ],
+   "risky": 11,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": true,
+   "system_cost": 0.0,
+   "turn_latency_ms": [
+    26.8,
+    2.6,
+    1.7,
+    25.3
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-34378",
+   "policy": "auto",
+   "gold_class": "feature",
+   "completed": true,
+   "error": null,
+   "user_turns": 2,
+   "clicks": 1,
+   "question_turns": 1,
+   "gold_required": 2,
+   "recovered": 2,
+   "recall": [
+    0.39473684210526316,
+    0.30434782608695654
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 1,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": null,
+   "system_cost": 0.001158,
+   "turn_latency_ms": [
+    21.9,
+    2986.5,
+    5954.3
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-34378",
+   "policy": "corrects",
+   "gold_class": "feature",
+   "completed": true,
+   "error": null,
+   "user_turns": 2,
+   "clicks": 1,
+   "question_turns": 1,
+   "gold_required": 2,
+   "recovered": 2,
+   "recall": [
+    0.39473684210526316,
+    0.30434782608695654
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 1,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": null,
+   "system_cost": 0.0,
+   "turn_latency_ms": [
+    20.1,
+    2.6,
+    27.599999999999998
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-32072",
+   "policy": "auto",
+   "gold_class": "task",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 1,
+   "question_turns": 2,
+   "gold_required": 1,
+   "recovered": 1,
+   "recall": [
+    0.5555555555555556
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 4,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": null,
+   "system_cost": 0.001646,
+   "turn_latency_ms": [
+    10.9,
+    1922.7,
+    3217.7,
+    5316.500000000001
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": true,
+     "all_absent": true,
+     "all_present": false,
+     "ai_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-32072",
+   "policy": "corrects",
+   "gold_class": "task",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 1,
+   "question_turns": 2,
+   "gold_required": 1,
+   "recovered": 1,
+   "recall": [
+    0.5555555555555556
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 4,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": null,
+   "system_cost": 0.0,
+   "turn_latency_ms": [
+    27.1,
+    2.6,
+    1.9000000000000001,
+    39.9
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": true,
+     "all_absent": true,
+     "all_present": false,
+     "ai_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-53903",
+   "policy": "auto",
+   "gold_class": "idea",
+   "completed": true,
+   "error": null,
+   "user_turns": 2,
+   "clicks": 2,
+   "question_turns": 1,
+   "gold_required": 2,
+   "recovered": 0,
+   "recall": [],
+   "grounded": [
+    true,
+    true,
+    false
+   ],
+   "risky": 0,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": false,
+   "class_top2": false,
+   "bug_all_four": null,
+   "system_cost": 0.000619,
+   "turn_latency_ms": [
+    235.0,
+    4107.8,
+    3771.8
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": true,
+     "all_present": false,
+     "ai_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-53903",
+   "policy": "corrects",
+   "gold_class": "idea",
+   "completed": true,
+   "error": null,
+   "user_turns": 2,
+   "clicks": 2,
+   "question_turns": 1,
+   "gold_required": 2,
+   "recovered": 2,
+   "recall": [
+    0.14583333333333334,
+    0.27586206896551724
+   ],
+   "grounded": [
+    true,
+    true,
+    false
+   ],
+   "risky": 1,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": false,
+   "class_top2": false,
+   "bug_all_four": null,
+   "system_cost": 0.001122,
+   "turn_latency_ms": [
+    14.6,
+    2739.8,
+    8919.8
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-33997",
+   "policy": "auto",
+   "gold_class": "bug",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 1,
+   "question_turns": 2,
+   "gold_required": 3,
+   "recovered": 2,
+   "recall": [
+    0.6153846153846154,
+    0.5238095238095238
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 7,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": false,
+   "system_cost": 0.0014140000000000001,
+   "turn_latency_ms": [
+    30.8,
+    2078.9,
+    2740.1,
+    3973.5
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": true,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false
+    }
+   ]
+  },
+  {
+   "key": "SPARK-33997",
+   "policy": "corrects",
+   "gold_class": "bug",
+   "completed": true,
+   "error": null,
+   "user_turns": 3,
+   "clicks": 1,
+   "question_turns": 2,
+   "gold_required": 3,
+   "recovered": 2,
+   "recall": [
+    0.6153846153846154,
+    0.5238095238095238
+   ],
+   "grounded": [
+    true,
+    true,
+    true
+   ],
+   "risky": 7,
+   "invented_vs_conversation": [],
+   "invented_vs_ticket": [],
+   "class_top1": true,
+   "class_top2": true,
+   "bug_all_four": false,
+   "system_cost": 0.0,
+   "turn_latency_ms": [
+    50.400000000000006,
+    2.0999999999999996,
+    1.2,
+    19.099999999999998
+   ],
+   "c3_stop_offered": false,
+   "c2_pass2_alert": true,
+   "opener_leak": false,
+   "sim": [
+    {
+     "sentences": 2,
+     "dont_know": false,
+     "all_absent": false,
+     "all_present": true,
+     "ai_mention": false
+    },
+    {
+     "sentences": 2,
+     "dont_know": true,
+     "all_absent": false,
+     "all_present": false,
+     "ai_mention": false
+    }
+   ]
+  }
+ ],
+ "transcripts": "e2e_transcripts_smoke_20261115T181131Z.jsonl"
+}

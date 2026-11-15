@@ -2,10 +2,10 @@
 
     state = run_dialogue(pipeline, "Spark crashes when ...", answer_fn, Policy())
 
-`answer_fn(state, questions) -> str` answers C5's questions (later: the simulator). The policy fixes every other
-user action, so runs are reproducible: confirm C1's top-1 class and top-1 component, dismiss nothing, continue on
-the scope stop offer, accept all assumptions as they are. Returns the final state with the full trace; stops early
-on a failed step (state.last_error) or after `max_actions` user actions.
+`answer_fn(state, questions) -> str` answers C5's questions (the simulator). The policy fixes every other user
+action, so runs are reproducible: confirm C1's top-1 class (or `confirm_class`, the user's own choice) and top-1
+component, dismiss nothing, continue on the scope stop offer, accept all assumptions as they are. Returns the final
+state with the full trace; stops early on a failed step (state.last_error) or after `max_actions` user actions.
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ AnswerFn = Callable[[SessionState, list[dict[str, str]]], str]
 
 @dataclass(frozen=True)
 class Policy:
+    confirm_class: str | None = None  # None: C1's top-1 ("auto"); a class: the user picks it ("user-corrects")
     dismiss_duplicates: bool = False
     continue_on_scope_stop: bool = True
     max_actions: int = 12
@@ -37,7 +38,8 @@ def run_dialogue(
             if policy.dismiss_duplicates:
                 for c in (state.c2_pass1 or {}).get("candidates", []):
                     state = pipeline.dismiss(state, c["key"])
-            state = pipeline.confirm_class(state, state.class_candidates[0][0], state.component_candidates[:1])
+            cls = policy.confirm_class or state.class_candidates[0][0]
+            state = pipeline.confirm_class(state, cls, state.component_candidates[:1])
         elif state.stage == "asking":
             state = pipeline.answer(state, answer_fn(state, state.pending_questions))
         elif state.stage == "scope_decision":

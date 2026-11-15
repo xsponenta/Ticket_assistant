@@ -12,6 +12,11 @@ ROOT = Path(__file__).resolve().parents[2]
 ABLATION = ROOT / "data" / "eval" / "gap_ablation.jsonl"
 META = ROOT / "data" / "eval" / "gap_ablation_meta.json"
 EXTRACTIONS = ROOT / "data" / "eval" / "gap_extractions.jsonl"
+DESC_CHARS = 4000  # description characters in the ticket text (extraction input, C4's first turn, e2e hidden ticket)
+
+
+def ticket_text(summary: str, description: str) -> str:
+    return f"Summary: {summary.strip()}\n\nDescription:\n{(description or '')[:DESC_CHARS].strip()}"
 
 
 def items_sha256(items: list[dict[str, Any]]) -> str:

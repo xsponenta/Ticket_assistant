@@ -104,6 +104,7 @@ class Pipeline:
             self._event(state, "skip", "user", "skip", "no more questions")
             return self._run(state, "scope")
         state.conversation.append({"role": "user", "content": text.strip()})
+        self._event(state, "answer", "user", text, f"turn {state.question_turns}")
         return self._run(state, "gather")
 
     def scope_decision(self, state: SessionState, stop: bool) -> SessionState:
