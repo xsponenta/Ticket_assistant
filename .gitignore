@@ -20,3 +20,7 @@ data/processed/embeddings/
 
 # Fitted app models (re-created by src/pipeline_resources.py)
 models/
+
+# macOS and local smoke runs (smoke results are kept only when a report or config cites them)
+.DS_Store
+eval/results/*_smoke_*
