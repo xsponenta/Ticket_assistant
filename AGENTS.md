@@ -20,13 +20,22 @@ All other types (incl. Sub-task) are excluded. Field definitions will live in
 `src/schemas/ticket_types.yaml` (single source of truth once created).
 
 ## Data (done — do not rebuild without being asked)
-- Raw: `data/raw/` (gitignored, never modified). Processed: `data/processed/issues.parquet`
-  (main, 2020–2025), `data/processed/drift_2026.parquet`, `data/processed/doc_chunks.jsonl`.
-- Decisions D1–D5 (mapping, idea source = SPARK Wish only, 2026 → drift set, no resampling +
-  macro-F1, PII masking) are in `reports/decisions.md`. Follow them.
-- `data/processed/splits.json` is FROZEN (test hash recorded in decisions.md). Never regenerate it.
-- Eval sets in `data/eval/` are FROZEN: classification_test, duplicates, scope_candidates,
-  scope_labeled (manual labels by the user), simulator_candidates. See `data/eval/README.md`.
+- Raw: `data/raw/` (gitignored, never modified). Processed:
+  - `data/processed/issues.parquet`: main dataset, 14,989 issues created before 2026. Non-idea classes start at 2020-01-01; idea uses all SPARK Wish history (from 2014).
+  - `data/processed/drift_2026.parquet`: every issue created in 2026, all classes (3,567).
+  - `data/processed/doc_chunks.jsonl`: Spark 4.3.0 docs, 2,034 chunks.
+- Decisions D1–D5 are in `reports/decisions.md`. Follow them.
+  - D1: the mapping in the table above.
+  - D2: idea = SPARK Wish (all-time) + Brainstorming; `wish_other.jsonl` is never used.
+  - D3: 2026 → drift set.
+  - D4: no resampling, stratified splits, macro-F1, class weights allowed.
+  - D5: PII is masked as `<EMAIL>` / `<USER>`, and URL credentials are removed.
+- `data/processed/splits.json` is FROZEN. Never regenerate it.
+  - Train / val / test = 70/15/15, stratified, duplicate-aware.
+  - Test hash: `339455ee27a9ecde360fc82b99dc4f8475de09c2b00093744f2721b36a7e580a`.
+  - Test counts: bug 806, feature 1,149, task 269, idea 24.
+- Eval sets in `data/eval/` are FROZEN: classification_test, duplicates, scope_candidates, scope_labeled (manual labels by the user), simulator_candidates. See `data/eval/README.md`.
+  - duplicates: a Duplicate link is undirected. The later-created issue is the query, the earlier one is gold, and the corpus is the issues created before the query.
 
 ## Components (each = separate module + its own eval)
 | ID | Module | Input | Output | Model / tool |
@@ -59,9 +68,14 @@ Rules:
 
 ## Engineering rules
 - Python 3.13, `.venv`, `requirements.txt`, ruff (lint + format), pytest.
-- ALL LLM calls go through `src/llm.py`: models from `config.yaml` by role
-  (generator / judge / simulator); disk cache; retries with backoff; JSON output validated
-  into pydantic models; every call logged to `logs/llm_calls.jsonl`; Langfuse only if keys are set.
+- ALL LLM calls go through `src/llm.py`. Never import `openai` anywhere else.
+  - API: `complete(messages, role=..., component=..., session_id=None, schema=None, temperature=None, max_tokens=None)`.
+  - Models come from `config.yaml` by role (generator / judge / simulator). `temperature=None` means the role default; the judge always runs at 0.
+  - Behaviour: disk cache, retries with backoff, JSON output validated into pydantic models (one repair retry).
+  - Every call is logged to `logs/llm_calls.jsonl`. Langfuse tracing runs only if keys are set.
+  - `complete()` is thread-safe: eval scripts may parallelise with a `ThreadPoolExecutor` (4–8 workers).
+  - Components always select models through `role`. Only experiment scripts (e.g. `scripts/model_bakeoff.py`) may use the `model=` / `reasoning=` overrides.
+- Models: OpenRouter ids in `config.yaml`, chosen by the user from `scripts/list_models.py`. Never pick or change models yourself. The `embedder` is a local model and is not called through `src/llm.py`.
 - Prompts live in `src/prompts/<component>.md` with a version header. Never inline prompt strings.
 - Component I/O = pydantic models in `src/schemas/`. Components never import each other;
   only `pipeline.py` composes them.
@@ -92,8 +106,13 @@ Rules:
 - Ambiguous requirement → ask, don't guess.
 
 ## Commands
-- Setup: `source .venv/bin/activate && pip install -r requirements.txt`
+- Setup: `source .venv/bin/activate && pip install -r requirements.txt && cp .env.example .env` (add `OPENROUTER_API_KEY`)
 - Tests: `python -m pytest -q`
+- Lint: `ruff check <files> && ruff format --check <files>`. Ruff is applied to new and changed files. Code written before ruff was added (`src/data/`, older tests) is not reformatted yet.
+- LLM:
+  - `python scripts/list_models.py`: candidate models and prices.
+  - `python -m src.llm --ping`: one call per role.
+  - `python -m src.llm --stats`: calls, cache hit rate, tokens and cost.
 - Data pipeline: `python src/data/prepare.py` → `split.py` (frozen check) → `build_eval.py`
   → `chunk_docs.py` → `report_prep.py`
 - Scope labeling (user only): `python src/data/label_cli.py`

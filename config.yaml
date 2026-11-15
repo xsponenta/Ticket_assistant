@@ -1,0 +1,22 @@
+# Project configuration. Read by src/llm.py (the only module that calls LLMs).
+
+llm:
+  base_url: https://openrouter.ai/api/v1
+  timeout_s: 60
+  max_attempts: 6                               # retries on 429 / 5xx / timeouts; backoff 1, 2, 4, 8, 16 s + jitter
+  cache_dir: .cache/llm                         # disk cache, one JSON file per request
+  log_path: logs/llm_calls.jsonl                # one line per call (incl. cache hits and failures)
+  models_cache: .cache/openrouter_models.json   # model capabilities from OpenRouter /models, refreshed after 24 h
+
+# OpenRouter model ids per role. Placeholders: pick them from `python scripts/list_models.py`.
+models:
+  generator: CHOOSE_ME     # components C1, C3–C6
+  judge: CHOOSE_ME         # LLM-as-judge; must differ from the generator (AGENTS.md)
+  simulator: CHOOSE_ME     # simulated user in dialogue evals
+  embedder: CHOOSE_ME      # local embedding model for C2 (duplicate finder); NOT called through src/llm.py
+
+# Default temperature per role, used when complete(..., temperature=None). The judge is always run at 0.
+temperature:
+  generator: 0.0
+  judge: 0.0
+  simulator: 0.7

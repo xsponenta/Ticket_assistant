@@ -180,3 +180,38 @@ These were not specified in the brief; each is recorded here so it can be change
    - Kramdown TOC markers and bare `<div>` wrapper lines are removed.
    - `README.md` and `404.md` are skipped.
    - Tokens are counted with tiktoken `cl100k_base`, as a proxy for the model's tokenizer.
+
+---
+
+## L1 · Shared LLM client (`src/llm.py`) — 2026-11-15
+
+**Decision**
+- All LLM calls go through `src/llm.py`: OpenRouter via the openai SDK.
+- Disk cache keyed by the full request (model, messages, temperature, max_tokens, response format / schema).
+- Exponential backoff on 429 / 5xx / timeouts / connection errors. A 200 response without choices is retried too.
+- Structured output depends on what the model supports (from OpenRouter `/models`):
+  - `json_schema` if `structured_outputs` is supported;
+  - otherwise `json_object` plus the schema in the prompt;
+  - otherwise the schema in the prompt only.
+
+  The reply is always validated with pydantic, with one repair retry.
+- One JSON log line per call. Langfuse tracing is optional.
+- Thread-safe: one shared client, atomic cache writes (temp file + `os.replace`), locked log appends.
+
+**Choices made with the user**
+- `temperature=None` uses the role default from `config.yaml` (generator 0, judge 0, simulator 0.7). The judge is always forced to 0. Alternative rejected: a fixed function default of 0, which would make the config defaults dead.
+- Ruff is applied to new and changed files only. Alternative rejected: reformatting `src/data/` now. That code has 102 findings, mostly long lines, left for a separate clean-up.
+- `max_tokens` is optional and part of the cache key.
+
+**Other choices**
+- `strict: false` in `json_schema` mode, because pydantic schemas are not always strict-compatible; validation happens client-side anyway.
+- Cache hits are logged with `cost: 0` and the token counts of the original call.
+- The cache also stores the full request, so prompts can be inspected; prompts are not written to the log.
+- `scripts/list_models.py` excludes moving `~provider/...-latest` aliases: evals need a model that does not change underneath them.
+- It prints rule-based candidates only; the user chooses the models.
+
+**Evidence:** `tests/test_llm.py`, 15 tests with a mocked HTTP transport:
+- cache, retries, 400 not retried, max attempts;
+- json_schema / json_object / prompt modes, repair, config errors;
+- temperature rules, max_tokens;
+- 20 concurrent calls, repeated 30 times without a failure.

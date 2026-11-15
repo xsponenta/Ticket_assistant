@@ -11,3 +11,8 @@ __pycache__/
 data/processed/*.parquet
 data/processed/doc_chunks.jsonl
 .pytest_cache/
+
+# Secrets and local LLM artifacts
+.env
+logs/
+.cache/
