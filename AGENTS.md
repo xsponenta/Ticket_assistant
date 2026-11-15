@@ -23,7 +23,7 @@ Spark-specific examples) live in `src/schemas/ticket_types.yaml`, the single sou
 - Raw: `data/raw/` (gitignored, never modified). Processed:
   - `data/processed/issues.parquet`: main dataset, 14,989 issues created before 2026. Non-idea classes start at 2020-01-01; idea uses all SPARK Wish history (from 2014).
   - `data/processed/drift_2026.parquet`: every issue created in 2026, all classes (3,567).
-  - `data/processed/doc_chunks.jsonl`: Spark 4.3.0 docs, 2,034 chunks.
+  - `data/processed/doc_chunks.jsonl`: Spark 4.3.0 docs + SQL function / config reference tables, 2,932 chunks (2,034 before the C3 corpus iterations, see `reports/03_data_preparation.md`).
 - Decisions D1–D5 are in `reports/decisions.md`. Follow them.
   - D1: the mapping in the table above.
   - D2: idea = SPARK Wish (all-time) + Brainstorming; `wish_other.jsonl` is never used.
@@ -40,15 +40,15 @@ Spark-specific examples) live in `src/schemas/ticket_types.yaml`, the single sou
 ## Components (each = separate module + its own eval)
 | ID | Module | Input | Output | Model / tool |
 |---|---|---|---|---|
-| C1 | classifier | user text | class, Spark component, confidence | LLM few-shot; baseline TF-IDF + LogReg |
-| C2 | duplicate_finder | draft summary + description | top-k earlier SPARK issues + score | BM25 + local embeddings (hybrid, RRF) |
+| C1 | classifier | user text | class, Spark component, confidence | TF-IDF + LogReg (final, M1); LLM few-shot was the evaluated alternative |
+| C2 | duplicate_finder | draft summary + description | top-k earlier SPARK issues + score + alert | dense local embeddings, `bge-small` (final, M2); BM25 and hybrid RRF were the evaluated alternatives |
 | C3 | scope_checker | request + filled fields | verdict ∈ {already_supported, needs_development, out_of_scope, insufficient_info} + cited doc chunks | RAG over Spark docs + LLM |
-| C4 | gap_detector | conversation + type schema | fields with status {confirmed, assumed, missing} | LLM structured extraction |
+| C4 | gap_detector | conversation + type schema | fields with status {confirmed, assumed, missing, unknown} | LLM structured extraction |
 | C5 | question_generator | missing fields + context | ≤2 clarifying questions | LLM |
 | C6 | ticket_composer | filled fields | Jira-ready markdown + JSON | LLM |
 
 Orchestration: `src/pipeline.py`, an explicit state machine (no agent framework unless asked).
-Flow: first message → C1 + C2 → loop C4→C5 (max 4 turns) → C3 (feature/task/idea only) → C6.
+Flow: first message → C1 + C2 (related issues only) → user confirms type → loop C4→C5 (max 4 turns) → C3 (feature/task/idea only) → C2 (full draft, may alert) → C6.
 
 ## CRISP-DM workflow (mandatory)
 | Phase | Artifacts |
@@ -122,5 +122,5 @@ Rules:
 - Data pipeline: `python src/data/prepare.py` → `split.py` (frozen check) → `build_eval.py`
   → `chunk_docs.py` → `report_prep.py`
 - Scope labeling (user only): `python src/data/label_cli.py`
-- App (later): `streamlit run app/streamlit_app.py`
-- Evals (later): `python -m eval.run_all`
+- App: `python -m streamlit run app/streamlit_app.py`
+- Evals: `python eval/eval_<c1..c6|e2e>.py` (see README; test runs need `--confirm-test` and an approved `eval/<c>_final_config.json`)

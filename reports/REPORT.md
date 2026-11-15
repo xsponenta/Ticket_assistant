@@ -118,7 +118,20 @@ flowchart LR
 
 All LLM calls go through one client (`src/llm.py`) to OpenRouter, using `deepseek-v4.1-flash` with reasoning off. The client provides caching, retries, validated JSON output and a call log. Two more models are used only for evaluation, never by the app: a judge (`gemini-3.5-flash-lite`) and a simulated user (`qwen3.5-27b`).
 
-### The six steps and the reasoning behind them
+### The six steps: input, output and calls
+
+| Step | Input | Output | Model / external call |
+|---|---|---|---|
+| **Type classifier** (C1) | first user message | top-2 ticket types with probabilities, top-3 Spark components | local TF-IDF + LogReg (fitted on the train split); no API call |
+| **Duplicate search** (C2) | first message; later the draft summary + description | top-5 earlier SPARK issues (key, title, Jira link, score) + alert flag | local embedder `bge-small` over 14,989 issues; links to `issues.apache.org/jira` |
+| **Gap detector** (C4) | conversation so far + the confirmed type's field schema | each field: confirmed / assumed / missing / unknown, with value and quoted evidence | 1 LLM call per turn (OpenRouter) |
+| **Question generator** (C5) | missing fields + given fields + "unknown" fields + conversation | ≤ 2 questions, each aimed at one field | 1 LLM call per turn (OpenRouter) |
+| **Docs check** (C3) | request summary + description (feature / task / idea) | verdict (already supported / needs development / out of scope / insufficient info), cited chunk ids, doc link | local embedder retrieves 8 of 2,932 doc chunks; 1 LLM call (OpenRouter) |
+| **Ticket composer** (C6) | type, component, field states | Jira-ready Markdown + JSON (title, Jira type, fields, assumptions to confirm) | 1 LLM call for the text (OpenRouter); a code template assembles the ticket |
+
+**External services at runtime:** OpenRouter (all LLM calls, through `src/llm.py`) and, only if keys are set, Langfuse tracing. The Jira API and the Spark docs site are used offline, in data preparation only; the app never writes to Jira.
+
+### Why each step is built this way
 
 | Step | What it does | Why this design |
 |---|---|---|

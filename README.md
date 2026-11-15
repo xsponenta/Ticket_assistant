@@ -74,6 +74,7 @@ Each component has its own eval with a `--limit N` smoke mode. Test splits are e
 | C4 | `python eval/eval_c4.py --split dev` |
 | C5 | `python eval/eval_c5.py --split dev --mode oracle` / `--mode chained` |
 | C6 | `python eval/eval_c6.py --split dev` |
+| End-to-end | `python eval/eval_e2e.py --split smoke` (simulated user; `--rescore <transcripts.jsonl>` recomputes metrics without LLM calls) |
 
 Human labelling tools:
 - `src/data/label_cli.py` (scope labels);
