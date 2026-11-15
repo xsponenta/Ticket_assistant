@@ -5,3 +5,9 @@ data/raw/
 .venv/
 __pycache__/
 *.pyc
+
+# Derived data (re-created by src/data/*.py). splits.json, prep_stats.json and data/eval/ are tracked:
+# the test split is frozen and the eval sets must not change silently.
+data/processed/*.parquet
+data/processed/doc_chunks.jsonl
+.pytest_cache/

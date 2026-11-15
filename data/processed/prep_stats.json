@@ -1,0 +1,267 @@
+{
+  "prepare": {
+    "updated_at": "2026-11-15T12:02:48+00:00",
+    "raw": {
+      "spark_issues.jsonl": 31290,
+      "spark_wish_all.jsonl": 158,
+      "wish_other.jsonl": "not used (D2)"
+    },
+    "union": {
+      "unique_issues": 31403,
+      "wish_in_both_files": 45
+    },
+    "d1_mapping": {
+      "before": 31403,
+      "after": 18556,
+      "kept_by_type": {
+        "Improvement": 8142,
+        "Bug": 6994,
+        "New Feature": 1002,
+        "Task": 996,
+        "Test": 798,
+        "Documentation": 309,
+        "Wish": 158,
+        "Dependency upgrade": 114,
+        "Story": 36,
+        "Brainstorming": 7
+      },
+      "excluded_by_type": {
+        "Sub-task": 12280,
+        "Umbrella": 336,
+        "Question": 161,
+        "Epic": 53,
+        "IT Help": 5,
+        "Request": 4,
+        "Github Integration": 3,
+        "RTC": 3,
+        "Planned Work": 1,
+        "Blog - New Blog Request": 1
+      }
+    },
+    "d3_date_range": {
+      "before": 18556,
+      "main": 14989,
+      "drift_2026": 3567,
+      "main_by_class": {
+        "bug": 5419,
+        "feature": 7624,
+        "task": 1784,
+        "idea": 162
+      },
+      "drift_by_class": {
+        "bug": 1575,
+        "feature": 1556,
+        "task": 433,
+        "idea": 3
+      },
+      "main_by_type": {
+        "Improvement": 6698,
+        "Bug": 5419,
+        "New Feature": 896,
+        "Task": 843,
+        "Test": 588,
+        "Documentation": 253,
+        "Wish": 155,
+        "Dependency upgrade": 100,
+        "Story": 30,
+        "Brainstorming": 7
+      },
+      "drift_by_type": {
+        "Bug": 1575,
+        "Improvement": 1444,
+        "Test": 210,
+        "Task": 153,
+        "New Feature": 106,
+        "Documentation": 56,
+        "Dependency upgrade": 14,
+        "Story": 6,
+        "Wish": 3
+      },
+      "idea_before_2020": 113,
+      "idea_in_2026_moved_to_drift": 3,
+      "main_created_range": [
+        "2014-04-17",
+        "2025-12-31"
+      ]
+    },
+    "text": {
+      "main_raw_with_url_credentials": 2,
+      "main_empty_description": 3552,
+      "main_empty_description_by_class": {
+        "bug": 772,
+        "feature": 2179,
+        "task": 598,
+        "idea": 3
+      },
+      "main_with_email_mask": 19,
+      "main_with_user_mask": 94,
+      "main_with_code_block": 3746,
+      "main_empty_summary": 0
+    },
+    "duplicates": {
+      "main_issues_with_duplicate_of": 296,
+      "main_issues_with_duplicated_by": 204,
+      "pairs_both_in_main": 184
+    }
+  },
+  "splits": {
+    "updated_at": "2026-11-15T12:01:44+00:00",
+    "counts": {
+      "train": {
+        "bug": 3800,
+        "feature": 5333,
+        "idea": 113,
+        "task": 1246
+      },
+      "val": {
+        "bug": 813,
+        "feature": 1142,
+        "idea": 25,
+        "task": 269
+      },
+      "test": {
+        "bug": 806,
+        "feature": 1149,
+        "idea": 24,
+        "task": 269
+      }
+    },
+    "totals": {
+      "train": 10492,
+      "val": 2249,
+      "test": 2248
+    },
+    "duplicate_pairs_in_dataset": 184,
+    "duplicate_groups_size_ge_2": 160,
+    "largest_duplicate_group": 6,
+    "test_sha256": "339455ee27a9ecde360fc82b99dc4f8475de09c2b00093744f2721b36a7e580a"
+  },
+  "eval": {
+    "updated_at": "2026-11-15T12:02:49+00:00",
+    "classification_test": {
+      "rows": 324,
+      "by_class": {
+        "bug": 100,
+        "feature": 100,
+        "task": 100,
+        "idea": 24
+      },
+      "available_in_test": {
+        "bug": 806,
+        "feature": 1149,
+        "task": 269,
+        "idea": 24
+      },
+      "empty_description": 82
+    },
+    "duplicates": {
+      "directed_links_both_in_main": 184,
+      "undirected_pairs_both_in_main": 182,
+      "pairs_where_jira_duplicate_is_the_later_issue": 121,
+      "pairs_where_jira_duplicate_is_the_earlier_issue": 61,
+      "pairs_with_same_created_timestamp": 0,
+      "excluded_identical_normalised_summary": 25,
+      "valid_pairs": 157,
+      "duplicate_queries": 148,
+      "queries_with_multiple_gold": 5,
+      "non_duplicate_queries": 100,
+      "non_duplicate_pool": 13639,
+      "duplicate_queries_by_split": {
+        "train": 89,
+        "val": 24,
+        "test": 35
+      },
+      "duplicate_queries_by_class": {
+        "bug": 87,
+        "feature": 48,
+        "task": 13,
+        "idea": 0
+      }
+    },
+    "scope_candidates": {
+      "fixed": {
+        "selected": 25,
+        "per_split": {
+          "test": 25,
+          "val": 0,
+          "train": 0
+        },
+        "available_in_test": 493
+      },
+      "declined": {
+        "selected": 25,
+        "per_split": {
+          "test": 25,
+          "val": 0,
+          "train": 0
+        },
+        "available_in_test": 32
+      },
+      "not_a_problem_or_invalid": {
+        "selected": 25,
+        "per_split": {
+          "test": 23,
+          "val": 2,
+          "train": 0
+        },
+        "available_in_test": 23
+      },
+      "incomplete": {
+        "selected": 5,
+        "per_split": {
+          "test": 5,
+          "val": 0,
+          "train": 0
+        },
+        "available_in_test": 5
+      },
+      "rows": 80,
+      "by_class": {
+        "feature": 67,
+        "idea": 13
+      }
+    },
+    "simulator_candidates": {
+      "bug": {
+        "eligible": 135,
+        "test_with_description": 691
+      },
+      "feature": {
+        "eligible": 227,
+        "test_with_description": 819
+      },
+      "task": {
+        "eligible": 24,
+        "test_with_description": 177
+      },
+      "idea": {
+        "eligible": 15,
+        "test_with_description": 24
+      },
+      "rows": 60
+    }
+  },
+  "doc_chunks": {
+    "updated_at": "2026-11-15T12:02:51+00:00",
+    "version": "4.3.0",
+    "pages_in": 245,
+    "pages_skipped": [
+      "404",
+      "README"
+    ],
+    "pages_chunked": 243,
+    "chunks": 2034,
+    "tokens_total": 763422,
+    "tokens": {
+      "min": 10,
+      "p10": 202,
+      "median": 409,
+      "p90": 490,
+      "max": 500
+    },
+    "share_lt_300": 0.231,
+    "share_300_500": 0.769,
+    "share_gt_500": 0.0,
+    "tokenizer": "tiktoken cl100k_base"
+  }
+}
