@@ -200,12 +200,12 @@ This is the author's manual test of the app; the numbers come from the call log.
 
 | Step | Main metric | Result | Target |
 |---|---|---:|---:|
-| Type classifier | macro-F1 · component top-3 | 0.54 · 0.94 | ≥ 0.37 (human level) ✅ · ≥ 0.85 ✅ |
-| Duplicate search | found in top 5 · false alarms | 0.74 · 0.25 | ≥ 0.60 ✅ · ≤ 0.20 ❌ (borderline) |
-| Docs check | precision of "already supported" · accuracy | 0.63 (8/8 claims cited) · 0.32 | — · ≥ 0.65 ❌ |
+| Type classifier | macro-F1 · component top-3 | 0.54 · 0.94 | ≥ 0.37 (human level) · ≥ 0.85 |
+| Duplicate search | found in top 5 · false alarms | 0.74 · 0.25 | ≥ 0.60 · ≤ 0.20 (borderline) |
+| Docs check | precision of "already supported" · accuracy | 0.63 (8/8 claims cited) · 0.32 | — · ≥ 0.65 |
 | Gap detector | finding missing fields (F1, counting "assumed" as found) | 0.89 | — |
-| Question generator | right questions, ≤ 2, never re-asking "I don't know" | 1.00 | ✅ |
-| Ticket composer | valid · grounded · invented details | 1.00 · 0.91 · 0.3% | ✅ |
+| Question generator | right questions, ≤ 2, never re-asking "I don't know" | 1.00 | 100% (≤ 2 per turn) |
+| Ticket composer | valid · grounded · invented details | 1.00 · 0.91 · 0.3% | 100% · — · ≤ 5% |
 
 ![C4–C6 scores](figures/c4_c5_c6_scores.png)
 
