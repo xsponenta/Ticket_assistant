@@ -121,13 +121,59 @@ def show_candidate(c: dict[str, Any], done: int, total: int, hits: list[tuple[di
     print(rule)
 
 
+# Expected scope label for each Jira resolution, following the contributing guide's resolution conventions.
+# An assumption, used only to measure agreement with the resolution hint (the hint is not a label).
+HINT_TO_LABEL = {
+    "Fixed": "needs_development",  # a change was made, so code had to change
+    "Won't Fix": "out_of_scope",  # "no support or interest in acting on it"
+    "Won't Do": "out_of_scope",
+    "Later": "out_of_scope",
+    "Invalid": "out_of_scope",  # "not actionable, for example a non-Spark issue"
+    "Not A Problem": "already_supported",  # works as intended / obsolete
+    "Incomplete": "insufficient_info",
+}
+
+
+def summarize(labelled: list[dict[str, Any]], candidates: list[dict[str, Any]]) -> dict[str, Any]:
+    """Count, label distribution, majority-class accuracy (C3 reference point), agreement with the resolution hint."""
+    hint = {c["key"]: c["resolution_hint"] for c in candidates}
+    bucket = {c["key"]: c["bucket"] for c in candidates}
+    rows = [r for r in labelled if r["key"] in hint]
+    if not rows:
+        return {"labelled": 0, "candidates": len(candidates)}
+    dist = Counter(r["label"] for r in rows)
+    majority, majority_n = dist.most_common(1)[0]
+    agree = [HINT_TO_LABEL.get(hint[r["key"]]) == r["label"] for r in rows]
+    table: dict[str, Counter] = {}
+    for r in rows:
+        table.setdefault(bucket[r["key"]], Counter())[r["label"]] += 1
+    return {
+        "labelled": len(rows),
+        "candidates": len(candidates),
+        "label_distribution": dict(dist.most_common()),
+        "majority_label": majority,
+        "majority_class_accuracy": round(majority_n / len(rows), 3),
+        "agreement_with_resolution_hint": round(sum(agree) / len(rows), 3),
+        "hint_mapping": HINT_TO_LABEL,
+        "bucket_x_label": {b: dict(c) for b, c in sorted(table.items())},
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Manual scope labelling.")
     parser.add_argument("--candidates", type=Path, default=EVAL / "scope_candidates.jsonl")
     parser.add_argument("--chunks", type=Path, default=PROCESSED / "doc_chunks.jsonl")
     parser.add_argument("--out", type=Path, default=EVAL / "scope_labeled.jsonl")
     parser.add_argument("--show-hint", action="store_true", help="show the Jira resolution of each candidate")
+    parser.add_argument("--summary", action="store_true", help="summary of the labels so far (no labelling)")
     args = parser.parse_args()
+
+    if args.summary:
+        result = summarize(read_jsonl(args.out), read_jsonl(args.candidates))
+        print(json.dumps(result, indent=1))
+        if not result["labelled"]:
+            print(f"No labels yet in {args.out}: run `python src/data/label_cli.py` first.")
+        return
 
     candidates = read_jsonl(args.candidates)
     chunks = read_jsonl(args.chunks)

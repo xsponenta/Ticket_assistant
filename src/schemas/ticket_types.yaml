@@ -1,0 +1,134 @@
+# Ticket types: SINGLE SOURCE OF TRUTH for classes and fields (AGENTS.md).
+# Used by C4 (gap detector), C5 (question generator), C6 (ticket composer) and the evals.
+#
+# - Class ↔ Jira issue types follow decision D1 (reports/decisions.md).
+# - `required: true` fields must be confirmed (or explicitly marked missing by the user) before C6 composes a ticket.
+# - Examples are ILLUSTRATIVE and written for this file, not copied from the dataset (no test-split leakage when they
+#   are used in prompts).
+# - Jira conventions come from https://spark.apache.org/contributing.html (fetched 2026-11-15).
+
+version: 1
+
+# Fields every ticket gets, whatever its class. Filled by C1 / C6, confirmed by the user.
+common_fields:
+  - name: summary
+    required: true
+    description: >-
+      One-line Jira title naming the affected API/feature, the symptom or change, and the condition.
+      Not vague ("Update web UI", "Problem in scheduler" are not acceptable per the contributing guide).
+    example: "Kafka Streaming support fails to handle empty queue in YARN cluster mode"
+  - name: component
+    required: true
+    description: Spark Jira component(s) (e.g. SQL, PySpark, Structured Streaming, Connect); predicted by C1, confirmed by the user.
+    example: "Structured Streaming"
+  - name: labels
+    required: false
+    description: >-
+      Only the labels Spark uses: `correctness` (wrong results) or `data-loss`. Such bugs may be flagged Blocker;
+      otherwise priority stays Major or below (higher priorities are set by committers).
+    example: "correctness"
+
+classes:
+  bug:
+    description: Spark behaves incorrectly — a crash, an exception, a wrong result, a regression, or behaviour that contradicts the documentation.
+    jira_issue_types: [Bug]
+    submit_as: Bug
+    fields:
+      - name: steps_to_reproduce
+        required: true
+        description: Minimal code, query or steps that reproduce the problem, ideally runnable in spark-shell / pyspark.
+        example: |-
+          spark.range(10).withColumn("k", F.col("id") % 2) \
+            .groupBy("k").agg(F.percentile_approx("id", 0.5)).show()
+      - name: expected_behavior
+        required: true
+        description: What the user expected to happen, with the reason (documentation, previous version, other engine).
+        example: "Two rows with medians 4 and 5, as returned by Spark 3.5.1."
+      - name: actual_behavior
+        required: true
+        description: What happened instead — wrong output, the exception with the key lines of the stack trace, a hang, or a timing for performance regressions.
+        example: "java.lang.ArrayIndexOutOfBoundsException: Index 2 out of bounds for length 2 at org.apache.spark.sql.catalyst..."
+      - name: environment
+        required: true
+        description: >-
+          Spark version(s) known to show the problem (Jira "Affects Version"), API language (Scala, Java, Python, R, SQL)
+          and deployment (local, standalone, YARN, Kubernetes, a cloud service).
+        example: "Spark 4.0.1, PySpark, Kubernetes (client mode)"
+      - name: regression_since
+        required: false
+        description: Last version where it worked, if this is a regression; helps committers decide how far to backport.
+        example: "Worked in 3.5.1, fails since 4.0.0"
+      - name: workaround
+        required: false
+        description: A known way to avoid the problem, if any.
+        example: "Setting spark.sql.adaptive.enabled=false avoids the error."
+
+  feature:
+    description: A request for new functionality or an improvement of existing behaviour (new API, option or capability; better performance or usability).
+    jira_issue_types: [New Feature, Improvement, Story]
+    submit_as: Improvement   # New Feature when the capability does not exist at all
+    fields:
+      - name: motivation
+        required: true
+        description: The user problem or use case, and why existing APIs/configs are not enough.
+        example: "Our nightly jobs re-read 2 TB of Parquet only to count rows per partition; Spark has no metadata-only count for partitioned tables."
+      - name: proposed_behavior
+        required: true
+        description: What Spark should do, at the level of API / config / observable behaviour (not the implementation).
+        example: "Add DataFrameReader option `metadataOnlyCount` that answers count() from Parquet footers when no filter is applied."
+      - name: acceptance_criteria
+        required: true
+        description: Checkable conditions that tell when the request is fulfilled.
+        example: "count() on an unfiltered partitioned Parquet table reads no data pages; result equals the full scan; option documented."
+      - name: alternatives_considered
+        required: false
+        description: Workarounds or alternative designs, and why they fall short.
+        example: "Delta/Iceberg table statistics — not available for plain Parquet."
+      - name: design_reference
+        required: false
+        description: Design document, mailing-list thread or prior issue (the contributing guide expects detail for features).
+        example: "dev@spark.apache.org thread 'Metadata-only aggregates for Parquet', 2026-10"
+
+  task:
+    description: Engineering work that does not change user-facing behaviour — tests, documentation, dependency upgrades, refactoring, build/CI, release chores.
+    jira_issue_types: [Task, Test, Documentation, Dependency upgrade]
+    submit_as: Task
+    fields:
+      - name: goal
+        required: true
+        description: Why the work is needed (risk, maintenance cost, broken docs, CVE, flaky test).
+        example: "Netty 4.1.x has CVE-2026-1234 affecting the shuffle service."
+      - name: scope
+        required: true
+        description: What is in scope and, explicitly, what is out of scope.
+        example: "In: bump netty to 4.2.3 in pom.xml and the dependency manifests. Out: shaded netty in the Hive thrift server."
+      - name: definition_of_done
+        required: true
+        description: Verifiable completion criteria.
+        example: "Build and all tests pass on JDK 17 and 21; dev/deps manifests updated; no new license warnings."
+      - name: related_issues
+        required: false
+        description: Parent / related Jira keys or pull requests.
+        example: "SPARK-12345"
+
+  idea:
+    description: An exploratory wish or proposal that is open-ended and not yet concrete enough to implement.
+    jira_issue_types: [Wish, Brainstorming]
+    submit_as: Wish   # the contributing guide: large or unclear proposals belong on dev@ / spark-packages first (C3 decides)
+    fields:
+      - name: problem_hypothesis
+        required: true
+        description: The problem the user believes exists and why — stated as a hypothesis, not a solution.
+        example: "New PySpark users struggle to tune shuffle partitions; most of our jobs run with the default 200."
+      - name: target_users
+        required: true
+        description: Who would benefit (user group, workload, scale).
+        example: "PySpark users running small-to-medium batch jobs on Kubernetes without a dedicated platform team."
+      - name: expected_impact
+        required: true
+        description: What would improve and how it could be measured.
+        example: "Fewer out-of-memory and tiny-task problems; shorter job runtimes without manual tuning."
+      - name: open_questions
+        required: false
+        description: Uncertainties to settle before this could become a feature request.
+        example: "Should this live in Spark or as an advisor in a separate spark-packages project?"

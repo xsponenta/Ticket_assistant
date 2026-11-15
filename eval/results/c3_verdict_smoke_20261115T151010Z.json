@@ -1,0 +1,968 @@
+{
+ "stage": "verdict",
+ "variant": "dense",
+ "k_grid": {
+  "3": {
+   "metrics": {
+    "n": 5,
+    "failures": 0,
+    "accuracy": 0.4,
+    "accuracy_ci95": [
+     0.0,
+     0.8
+    ],
+    "majority_label": "needs_development",
+    "majority_baseline": 0.6,
+    "macro_f1": 0.143,
+    "macro_f1_ci95": [
+     0.0,
+     0.222
+    ],
+    "per_class": {
+     "already_supported": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+     },
+     "needs_development": {
+      "precision": 0.5,
+      "recall": 0.667,
+      "f1": 0.571,
+      "support": 3
+     },
+     "out_of_scope": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+     },
+     "insufficient_info": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 0
+     }
+    },
+    "gold_counts": {
+     "already_supported": 1,
+     "needs_development": 3,
+     "out_of_scope": 1,
+     "insufficient_info": 0
+    },
+    "pred_counts": {
+     "already_supported": 0,
+     "needs_development": 4,
+     "out_of_scope": 0,
+     "insufficient_info": 1
+    },
+    "confusion": [
+     [
+      0,
+      1,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      2,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    ],
+    "items_without_citation": 1,
+    "invalid_citation_rate": 0.143,
+    "citation_support_rate": 0.333,
+    "n_citations_judged": 6,
+    "doc_reference_grounded": null,
+    "ungrounded_references": [],
+    "explanation_le_2_sentences": 1.0
+   },
+   "calls": {
+    "calls": 6,
+    "call_errors": 0,
+    "repairs": 1,
+    "latency_p50_ms": 1900,
+    "latency_p95_ms": 2385,
+    "prompt_tokens": 12272,
+    "completion_tokens": 1385,
+    "cost": 0.001631,
+    "cost_per_100_calls": 0.02719
+   },
+   "judge_calls": {
+    "calls": 6,
+    "call_errors": 0,
+    "repairs": 0,
+    "latency_p50_ms": 1033,
+    "latency_p95_ms": 1368,
+    "prompt_tokens": 4287,
+    "completion_tokens": 348,
+    "cost": 0.002156,
+    "cost_per_100_calls": 0.03594
+   }
+  },
+  "5": {
+   "metrics": {
+    "n": 5,
+    "failures": 0,
+    "accuracy": 0.4,
+    "accuracy_ci95": [
+     0.0,
+     0.8
+    ],
+    "majority_label": "needs_development",
+    "majority_baseline": 0.6,
+    "macro_f1": 0.143,
+    "macro_f1_ci95": [
+     0.0,
+     0.222
+    ],
+    "per_class": {
+     "already_supported": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+     },
+     "needs_development": {
+      "precision": 0.5,
+      "recall": 0.667,
+      "f1": 0.571,
+      "support": 3
+     },
+     "out_of_scope": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+     },
+     "insufficient_info": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 0
+     }
+    },
+    "gold_counts": {
+     "already_supported": 1,
+     "needs_development": 3,
+     "out_of_scope": 1,
+     "insufficient_info": 0
+    },
+    "pred_counts": {
+     "already_supported": 0,
+     "needs_development": 4,
+     "out_of_scope": 0,
+     "insufficient_info": 1
+    },
+    "confusion": [
+     [
+      0,
+      1,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      2,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    ],
+    "items_without_citation": 1,
+    "invalid_citation_rate": 0.0,
+    "citation_support_rate": 0.455,
+    "n_citations_judged": 11,
+    "doc_reference_grounded": null,
+    "ungrounded_references": [],
+    "explanation_le_2_sentences": 1.0
+   },
+   "calls": {
+    "calls": 5,
+    "call_errors": 0,
+    "repairs": 0,
+    "latency_p50_ms": 2400,
+    "latency_p95_ms": 4349,
+    "prompt_tokens": 14347,
+    "completion_tokens": 1495,
+    "cost": 0.002402,
+    "cost_per_100_calls": 0.04805
+   },
+   "judge_calls": {
+    "calls": 11,
+    "call_errors": 0,
+    "repairs": 0,
+    "latency_p50_ms": 960,
+    "latency_p95_ms": 1562,
+    "prompt_tokens": 7812,
+    "completion_tokens": 632,
+    "cost": 0.003924,
+    "cost_per_100_calls": 0.03567
+   }
+  },
+  "8": {
+   "metrics": {
+    "n": 5,
+    "failures": 0,
+    "accuracy": 0.6,
+    "accuracy_ci95": [
+     0.2,
+     1.0
+    ],
+    "majority_label": "needs_development",
+    "majority_baseline": 0.6,
+    "macro_f1": 0.188,
+    "macro_f1_ci95": [
+     0.083,
+     0.25
+    ],
+    "per_class": {
+     "already_supported": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+     },
+     "needs_development": {
+      "precision": 0.6,
+      "recall": 1.0,
+      "f1": 0.75,
+      "support": 3
+     },
+     "out_of_scope": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+     },
+     "insufficient_info": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 0
+     }
+    },
+    "gold_counts": {
+     "already_supported": 1,
+     "needs_development": 3,
+     "out_of_scope": 1,
+     "insufficient_info": 0
+    },
+    "pred_counts": {
+     "already_supported": 0,
+     "needs_development": 5,
+     "out_of_scope": 0,
+     "insufficient_info": 0
+    },
+    "confusion": [
+     [
+      0,
+      1,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      3,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      1,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    ],
+    "items_without_citation": 1,
+    "invalid_citation_rate": 0.0,
+    "citation_support_rate": 0.083,
+    "n_citations_judged": 12,
+    "doc_reference_grounded": null,
+    "ungrounded_references": [],
+    "explanation_le_2_sentences": 1.0
+   },
+   "calls": {
+    "calls": 5,
+    "call_errors": 0,
+    "repairs": 0,
+    "latency_p50_ms": 1950,
+    "latency_p95_ms": 2064,
+    "prompt_tokens": 20332,
+    "completion_tokens": 1320,
+    "cost": 0.004261,
+    "cost_per_100_calls": 0.08521
+   },
+   "judge_calls": {
+    "calls": 12,
+    "call_errors": 0,
+    "repairs": 0,
+    "latency_p50_ms": 986,
+    "latency_p95_ms": 1214,
+    "prompt_tokens": 7811,
+    "completion_tokens": 656,
+    "cost": 0.003983,
+    "cost_per_100_calls": 0.03319
+   }
+  }
+ },
+ "k": 3,
+ "final": {
+  "variant": "dense",
+  "k": 3,
+  "prompt_version": "c3_scope/v1",
+  "results": [
+   {
+    "key": "SPARK-26008",
+    "output": {
+     "rationale": "The request asks for a user-facing, externally controlled clock injected into DataStreamWriter/query execution so that time-dependent operators (e.g. processing-time timeouts in mapGroupsWithState) can be simulated deterministically outside tests. The provided excerpts only cover Real-time Mode (Trigger.RealTime, its configs, and transformWithState behavior), and explicitly state that processing-time timers use the live clock; they show no public API for supplying a custom trigger clock, and the Internal StreamTest clock is test-only. Nothing in the excerpts indicates such a parameter exists or is planned, so this would require new development in Spark's streaming scheduler/clock plumbing.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "streaming/real-time-mode#000",
+      "streaming/structured-streaming-transform-with-state#009",
+      "streaming/real-time-mode#024"
+     ],
+     "explanation": "The provided docs do not show any public way to pass a custom clock to DataStreamWriter or a query; the only clock-related behavior documented is that processing-time timers use the live clock. Exposing an externally controlled clock would require new Spark code in the streaming scheduler, so this is a development request rather than something available today.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "streaming/real-time-mode#000",
+     "streaming/structured-streaming-transform-with-state#009",
+     "streaming/real-time-mode#024"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-26417",
+    "output": {
+     "rationale": "The request asks to add state descriptions (like comments) to `SparkListener` states, suggesting changes to the constructor or an enum flag in `SparkAppHandle.State`. The provided documentation focuses entirely on configuring and using Spark Event Logs for post-mortem UI reconstruction, not on adding descriptive metadata to internal listener states. Therefore, this feature requires code changes within Spark itself.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      ""
+     ],
+     "explanation": "The current documentation does not mention adding descriptive comments to internal Spark listener states. Implementing this feature would require changes to the Spark codebase.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "configuration#037",
+     "monitoring#000",
+     "configuration#038"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-27170",
+    "output": {
+     "rationale": "The request asks for a better SQL parser error message for an extraneous comma, with correct line numbers and a Presto-like 'mismatched input' style. The excerpt sql-ref-identifier#002 shows Spark 4.3 emitting PARSE_SYNTAX_ERROR with the offending token and a line/pos pointer plus a SQL snippet with a caret, which is essentially the improved error format requested. However, the request is about a specific parser behavior (extraneous comma) and the excerpts do not demonstrate that exact case, nor do they expose any API/config to control the message. Since the general improved parse-error reporting is shown as existing behavior, the closest verdict is already_supported, but no concrete API/config name appears in the excerpts, so doc_reference is left null and the explanation notes the docs do not show a specific API.",
+     "verdict": "insufficient_info",
+     "cited_chunk_ids": [
+      "sql-ref-identifier#002"
+     ],
+     "explanation": "The provided docs show Spark 4.3 already reports parse errors as PARSE_SYNTAX_ERROR with the offending token and a line/position pointer, which resembles the improved message you asked for. However, the docs do not show a specific API or config for this behavior, nor the exact extraneous-comma case, so it cannot be confirmed as fully supported.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-migration-guide#020",
+     "sql-migration-guide#050",
+     "sql-ref-identifier#002"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-28505",
+    "output": {
+     "rationale": "The request asks for a new data source option to drop partition columns from the output files when writing to file sources. The excerpts cover CSV options generally (header, delimiter, charset) and generic file source options (ignoreCorruptFiles, ignoreMissingFiles), plus migration notes on partition column validation. None of these describe an option to omit partition columns from written data. The docs do not show such an API/config, so it is not already supported; it is a reasonable Spark feature but needs implementation, hence needs_development.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [],
+     "explanation": "The provided docs only describe generic file source options like ignoreCorruptFiles/ignoreMissingFiles and CSV read/write options such as header and delimiter; they do not show any option to omit partition columns from written files. Since no such option appears in the excerpts, this would require new code in Spark's file writing path.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-data-sources-csv#000",
+     "sql-data-sources-generic-options#000",
+     "sql-migration-guide#057"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-29881",
+    "output": {
+     "rationale": "The request asks for a new Dataset API (`.barrier()`) to insert an explicit whole-stage-codegen barrier. None of the provided excerpts describe any such API, config, or mechanism for controlling codegen boundaries; they only cover general Dataset operations, SQL queries, streaming transforms, and stateful processing. Since the excerpts neither show an existing API for this nor contradict Spark's design, the feature would require new code, but the docs give no basis to confirm feasibility details beyond that it is a reasonable Spark-level enhancement.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "sql-getting-started#003",
+      "streaming/apis-on-dataframes-and-datasets#012"
+     ],
+     "explanation": "There is no existing Dataset API or config in the provided docs to insert an explicit whole-stage-codegen barrier, so this would require new Spark code. The provided docs do not show any such barrier mechanism, so it cannot be done today with a documented API.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-getting-started#003",
+     "streaming/real-time-mode#022",
+     "streaming/apis-on-dataframes-and-datasets#012"
+    ],
+    "doc_reference_grounded": null
+   }
+  ],
+  "citation_pairs": [
+   {
+    "pair_id": "cite|SPARK-26008|streaming/real-time-mode#000",
+    "key": "SPARK-26008",
+    "summary": "Structured Streaming Manual clock for simulation",
+    "description": "Structured streaming Internal StreamTest class allows to test incremental logic and verify outputs between multiple triggers. It support changing the internal spark clock to get full deterministic simulation of the incremental state and APIs. This is not possible outside tests since DataStreamWriter hides the triggerClock parameter and is final.\n\nThis can be very useful not only in unit test mode but also for a real running query. for example when you have all the Kafka historical data persisted to hdfs with its Kafka timestamp and you want to \"play\" the data and simulate the streaming application output as if running on this data in live streaming including incremental output between triggers.\n\nCurrently I can simulate multiple triggers and incremental logic for some of the APIs, but for APIs that depend on the execution clock like mapGroupsWithState with execution based timeout I did not find a way to do this.\n\nI would like to allow passing an externally controlled clock as parameter to DataStreamWriter and to the query itself.",
+    "verdict": "needs_development",
+    "explanation": "The provided docs do not show any public way to pass a custom clock to DataStreamWriter or a query; the only clock-related behavior documented is that processing-time timers use the live clock. Exposing an externally controlled clock would require new Spark code in the streaming scheduler, so this is a development request rather than something available today.",
+    "doc_reference": null,
+    "chunk_id": "streaming/real-time-mode#000",
+    "chunk_text": "Structured Streaming Programming Guide\n\n* Table of contents\n\n# Real-time Mode\n\n**Real-time Mode** is a new streaming execution mode introduced in Spark 4.1.0 that\ntargets ultra-low end-to-end latency using the Structured Streaming APIs and processing\nguarantees. Some scheduling and callback details differ from micro-batch execution and are\ndocumented below.\nIt is intended for operational workloads\nthat must react to data the moment it arrives, such as fraud detection, real-time alerting, and live\npersonalization.\n\nReal-time Mode in Apache Spark supports **stateless queries** -- projections, filters and other\nmap-like operations, unions, and stream-static joins -- and, starting in Spark 4.3.0, a first set of\n**stateful queries**: streaming **deduplication** (`dropDuplicates`) and streaming **aggregations**\n(`groupBy(...).agg(...)`), and the JVM (Scala/Java) **`transformWithState`** operator. These stateful\noperations require a shuffle, which Real-time Mode runs as a *pipelined shuffle* so that records\nstill stream through without waiting for a batch boundary; see\n[How Stateful Queries Work](#how-stateful-queries-work). Other stateful operations, including\nstream-stream joins and `flatMapGroupsWithState`, are not yet supported. See\n[Supported Queries](#supported-queries) for the full list.\n\nThe most important thing to know: **the duration you pass to the trigger (default 5 minutes) is\nprimarily a checkpoint interval, not the latency target for input-driven output.** Records can be\nprocessed and emitted continuously rather than waiting for batch boundaries. Batch-scoped effects,\nsuch as watermark advancement and timers on idle partitions, can still wait for the boundary. See\n[Batch Duration Is a Checkpoint Interval](#batch-duration-is-a-checkpoint-interval).\n\nYou enable Real-time Mode by setting a Real-time trigger on the streaming write; the rest of your\nquery is unchanged. See [Enabling Real-time Mode](#enabling-real-time-mode).",
+    "judge_run1": false,
+    "judge_reasoning": "The cited documentation chunk discusses Real-time Mode in Structured Streaming and mentions triggers and checkpoint intervals, but it contains no information regarding a manual clock for simulation."
+   },
+   {
+    "pair_id": "cite|SPARK-26008|streaming/structured-streaming-transform-with-state#009",
+    "key": "SPARK-26008",
+    "summary": "Structured Streaming Manual clock for simulation",
+    "description": "Structured streaming Internal StreamTest class allows to test incremental logic and verify outputs between multiple triggers. It support changing the internal spark clock to get full deterministic simulation of the incremental state and APIs. This is not possible outside tests since DataStreamWriter hides the triggerClock parameter and is final.\n\nThis can be very useful not only in unit test mode but also for a real running query. for example when you have all the Kafka historical data persisted to hdfs with its Kafka timestamp and you want to \"play\" the data and simulate the streaming application output as if running on this data in live streaming including incremental output between triggers.\n\nCurrently I can simulate multiple triggers and incremental logic for some of the APIs, but for APIs that depend on the execution clock like mapGroupsWithState with execution based timeout I did not find a way to do this.\n\nI would like to allow passing an externally controlled clock as parameter to DataStreamWriter and to the query itself.",
+    "verdict": "needs_development",
+    "explanation": "The provided docs do not show any public way to pass a custom clock to DataStreamWriter or a query; the only clock-related behavior documented is that processing-time timers use the live clock. Exposing an externally controlled clock would require new Spark code in the streaming scheduler, so this is a development request rather than something available today.",
+    "doc_reference": null,
+    "chunk_id": "streaming/structured-streaming-transform-with-state#009",
+    "chunk_text": "Structured Streaming Programming Guide > Components of a TransformWithState Query > Running in Real-time Mode\n\n## Running in Real-time Mode\n\nFor a Scala or Java `transformWithState` query, select `OutputMode.Update` and set\n`Trigger.RealTime` on the streaming write. The query must use a\n[supported source, sink, and plan](./real-time-mode.html#supported-queries), satisfy the\n[Real-time Mode requirements](./real-time-mode.html#requirements), and use the required\n[state-store configuration](./real-time-mode.html#state-store-defaults). For example, after\nconstructing a result `Dataset` of `(key, value)` tuples with `transformWithState`:\n\n```scala\nimport org.apache.spark.sql.streaming.Trigger\n\nval query = result\n  .selectExpr(\"CAST(_1 AS STRING) AS key\", \"CAST(_2 AS STRING) AS value\")\n  .writeStream\n  .format(\"kafka\")\n  .option(\"kafka.bootstrap.servers\", \"host1:port1,host2:port2\")\n  .option(\"topic\", \"output-topic\")\n  .option(\"checkpointLocation\", \"/path/to/checkpoint\")\n  .outputMode(\"update\")\n  .trigger(Trigger.RealTime(\"5 minutes\"))\n  .start()\n```\n\nThe trigger duration is the checkpoint interval, not the per-record latency target. During a\nlong-running input batch, processing-time timers and TTL use the live clock. Timer scans and\nphysical TTL cleanup are driven by arriving rows and by batch completion, so an idle state\npartition does not receive an independent timer wakeup. Event-time watermarks remain fixed during\na Real-time batch and advance between batches.\n\nIf the query supplies initial state, Spark commits that state in a finite bootstrap batch before it\nstarts processing Real-time input. Processing-time values passed to `handleInitialState` use that\nbootstrap batch's timestamp rather than the live clock. See\n[`transformWithState` in Real-time Mode](./real-time-mode.html#transformwithstate-in-real-time-mode)\nfor the complete execution and recovery behavior.",
+    "judge_run1": true,
+    "judge_reasoning": "The explanation states there is no public way to pass a custom clock to a streaming query and that processing-time timers use the live clock. The cited documentation confirms that processing-time timers and TTL use the live clock and does not mention any manual clock simulation APIs."
+   },
+   {
+    "pair_id": "cite|SPARK-26008|streaming/real-time-mode#024",
+    "key": "SPARK-26008",
+    "summary": "Structured Streaming Manual clock for simulation",
+    "description": "Structured streaming Internal StreamTest class allows to test incremental logic and verify outputs between multiple triggers. It support changing the internal spark clock to get full deterministic simulation of the incremental state and APIs. This is not possible outside tests since DataStreamWriter hides the triggerClock parameter and is final.\n\nThis can be very useful not only in unit test mode but also for a real running query. for example when you have all the Kafka historical data persisted to hdfs with its Kafka timestamp and you want to \"play\" the data and simulate the streaming application output as if running on this data in live streaming including incremental output between triggers.\n\nCurrently I can simulate multiple triggers and incremental logic for some of the APIs, but for APIs that depend on the execution clock like mapGroupsWithState with execution based timeout I did not find a way to do this.\n\nI would like to allow passing an externally controlled clock as parameter to DataStreamWriter and to the query itself.",
+    "verdict": "needs_development",
+    "explanation": "The provided docs do not show any public way to pass a custom clock to DataStreamWriter or a query; the only clock-related behavior documented is that processing-time timers use the live clock. Exposing an externally controlled clock would require new Spark code in the streaming scheduler, so this is a development request rather than something available today.",
+    "doc_reference": null,
+    "chunk_id": "streaming/real-time-mode#024",
+    "chunk_text": "Structured Streaming Programming Guide > Real-time Mode > Examples > Writing to the console for development\n\n```java\nimport org.apache.spark.sql.streaming.Trigger;\n\nspark\n  .readStream()\n  .format(\"kafka\")\n  .option(\"kafka.bootstrap.servers\", \"host1:port1,host2:port2\")\n  .option(\"subscribe\", \"input-topic\")\n  .load()\n  .selectExpr(\"CAST(key AS STRING)\", \"CAST(value AS STRING)\")\n  .where(\"value IS NOT NULL\")\n  .writeStream()\n  .format(\"console\")\n  .option(\"checkpointLocation\", \"/path/to/checkpoint\")\n  .outputMode(\"update\")\n  .trigger(Trigger.RealTime(\"30 seconds\"))\n  .start();\n```\n\n## Configuration\n\n| Configuration | Default | Meaning |\n|---|---|---|\n| `spark.sql.streaming.realTimeMode.minBatchDuration` | `5000` (ms, 5 seconds) | The minimum batch duration, in milliseconds, allowed for a Real-time trigger. See the batch-duration requirement under [Requirements](#requirements). |\n| `spark.sql.streaming.realTimeMode.allowlistCheck` | `true` | Whether to verify that all operators and sinks used by a Real-time query are in the supported allowlist. Disabling this check (not recommended) lets unsupported operators and sinks run at your own risk. |\n| `spark.sql.streaming.realTimeMode.dangerouslyAllowCheckpointV1.enabled` | `false` | Whether to allow a Real-time query to use state-store checkpoint format version 1. This is unsafe for stateful queries: format v1 can reuse state-file names when a failed batch is rerun, so the rerun can load stale state and lose updates. Prefer format v2 and a fresh checkpoint location. See [State store defaults](#state-store-defaults). |",
+    "judge_run1": false,
+    "judge_reasoning": "The cited chunk discusses the real-time mode trigger and configurations like minimum batch duration, but it does not mention or support anything about a manual clock for simulation."
+   },
+   {
+    "pair_id": "cite|SPARK-27170|sql-ref-identifier#002",
+    "key": "SPARK-27170",
+    "summary": "Better error message for syntax error with extraneous comma in the SQL parser",
+    "description": "<USER>, <USER>\n\nIt was great to talk with you in Hadoop / Spark Conference Japan 2019.\nThanks in advance!\nI filed this issue which I talked with you at that time.\n\nWe sometimes write a syntax error SQL with extraneous comma by mistake.\nFor example, here is the SQL with an extraneous comma in line 2.\n\n```\nSELECT distinct\n,a\n,b\n,c\nFROM ...' LIMIT 100\n```\n\nWe have an error message in spark 2.4.0 but it's a little hard to understand in my feeling because line number is wrong.\n\n```\ncannot resolve '`distinct`' given input columns: [...]; line 1 pos 7;\n'GlobalLimit 100\n+- 'LocalLimit 100\n+- 'Project ['distinct, ...]\n+- Filter (...)\n+- SubqueryAlias ...\n+- HiveTableRelation ...\n```\n\nBy the way, here is the error message in prestosql 305 and same sql.\nLine number is correct and I guess an error message is better than sparksql.\n\n```\nline 2:5: mismatched input ','. Expecting: '*', <expression>, <identifier>\n```\n\nIf sparksql error message improves, it would be great.\n\nThanks.",
+    "verdict": "insufficient_info",
+    "explanation": "The provided docs show Spark 4.3 already reports parse errors as PARSE_SYNTAX_ERROR with the offending token and a line/position pointer, which resembles the improved message you asked for. However, the docs do not show a specific API or config for this behavior, nor the exact extraneous-comma case, so it cannot be confirmed as fully supported.",
+    "doc_reference": null,
+    "chunk_id": "sql-ref-identifier#002",
+    "chunk_text": "Identifiers > Examples\n\n### Examples\n\n```sql\n-- This CREATE TABLE fails with ParseException because of the illegal identifier name a.b\nCREATE TABLE test (a.b int);\nError in query:\n[PARSE_SYNTAX_ERROR] Syntax error at or near '.': extra input '.'(line 1, pos 20)\n\n== SQL ==\nCREATE TABLE test (a.b int)\n--------------------^^^\n\n-- This CREATE TABLE works\nCREATE TABLE test (`a.b` int);\n\n-- This CREATE TABLE fails with ParseException because special character ` is not escaped\nCREATE TABLE test1 (`a`b` int);\nError in query:\n[PARSE_SYNTAX_ERROR] Syntax error at or near '`'(line 1, pos 24)\n\n== SQL ==\nCREATE TABLE test1 (`a`b` int)\n------------------------^^^\n\n-- This CREATE TABLE works\nCREATE TABLE test (`a``b` int);\n```",
+    "judge_run1": false,
+    "judge_reasoning": "The provided documentation chunk discusses parse errors for illegal identifiers and unescaped special characters, but it does not mention syntax errors involving extraneous commas in the SQL parser."
+   },
+   {
+    "pair_id": "cite|SPARK-29881|sql-getting-started#003",
+    "key": "SPARK-29881",
+    "summary": "Introduce API for manually breaking up dataset plan",
+    "description": "I have an interesting situation where I'm calling functions that are relatively expensive from Spark SQL, and then using the result several times in a loop through `transform`.\n\nAlthough the WholeStageCodegen is usually helpful, it always calls expressions as they're used, which means that in the case of, for example:\n\n`SELECT transform(sequence(0, 32), x -> expensive_result * x)`\n `FROM (`\n `SELECT expensive_operation(foo) AS expensive_result FROM source`\n `)`\n\nthe expensive_operation function will almost certainly be called 32 times for each source row, without any explicit way to cache that value intermediately.\n\nI've found a workaround for now is to insert something like `.filter { _ => true`} in the middle, which will create a barrier to whole-stage codegen without much negative impact, aside from preventing other optimizations like PushDown. This does indeed produce the intended result and expensive_operation is only run once.\n\nBut it would be great to have an API on Dataset like `.barrier()` to introduce an explicit barrier to whole-stage codegen without adding any additional behavior or getting in the way of any PushDown optimizations.",
+    "verdict": "needs_development",
+    "explanation": "There is no existing Dataset API or config in the provided docs to insert an explicit whole-stage-codegen barrier, so this would require new Spark code. The provided docs do not show any such barrier mechanism, so it cannot be done today with a documented API.",
+    "doc_reference": null,
+    "chunk_id": "sql-getting-started#003",
+    "chunk_text": "Getting Started > Untyped Dataset Operations (aka DataFrame Operations)\n\nIn addition to simple column references and expressions, Datasets also have a rich library of functions including string manipulation, date arithmetic, common math operations and more. The complete list is available in the [DataFrame Function Reference](api/java/org/apache/spark/sql/functions.html).\n\nFor a complete list of the types of operations that can be performed on a DataFrame refer to the [API Documentation](api/R/reference/index.html).\n\nIn addition to simple column references and expressions, DataFrames also have a rich library of functions including string manipulation, date arithmetic, common math operations and more. The complete list is available in the [DataFrame Function Reference](api/R/reference/SparkDataFrame.html).\n\n## Running SQL Queries Programmatically\n\nThe `sql` function on a `SparkSession` enables applications to run SQL queries programmatically and returns the result as a `DataFrame`.\n\nThe `sql` function on a `SparkSession` enables applications to run SQL queries programmatically and returns the result as a `DataFrame`.\n\nThe `sql` function on a `SparkSession` enables applications to run SQL queries programmatically and returns the result as a `Dataset<Row>`.\n\nThe `sql` function enables applications to run SQL queries programmatically and returns the result as a `SparkDataFrame`.\n\n## Global Temporary View\n\nTemporary views in Spark SQL are session-scoped and will disappear if the session that creates it\nterminates. If you want to have a temporary view that is shared among all sessions and keep alive\nuntil the Spark application terminates, you can create a global temporary view. Global temporary\nview is tied to a system preserved database `global_temp`, and we must use the qualified name to\nrefer it, e.g. `SELECT * FROM global_temp.view1`.\n\n```sql\nCREATE GLOBAL TEMPORARY VIEW temp_view AS SELECT a + 1, b * 2 FROM tbl\n\nSELECT * FROM global_temp.temp_view\n```",
+    "judge_run1": true,
+    "judge_reasoning": "The explanation states that there is no API or configuration in the provided docs for breaking up a dataset plan, and the cited documentation is only a general introduction to DataFrame operations and SQL queries, containing no information about breaking up plans or whole-stage codegen barriers."
+   },
+   {
+    "pair_id": "cite|SPARK-29881|streaming/apis-on-dataframes-and-datasets#012",
+    "key": "SPARK-29881",
+    "summary": "Introduce API for manually breaking up dataset plan",
+    "description": "I have an interesting situation where I'm calling functions that are relatively expensive from Spark SQL, and then using the result several times in a loop through `transform`.\n\nAlthough the WholeStageCodegen is usually helpful, it always calls expressions as they're used, which means that in the case of, for example:\n\n`SELECT transform(sequence(0, 32), x -> expensive_result * x)`\n `FROM (`\n `SELECT expensive_operation(foo) AS expensive_result FROM source`\n `)`\n\nthe expensive_operation function will almost certainly be called 32 times for each source row, without any explicit way to cache that value intermediately.\n\nI've found a workaround for now is to insert something like `.filter { _ => true`} in the middle, which will create a barrier to whole-stage codegen without much negative impact, aside from preventing other optimizations like PushDown. This does indeed produce the intended result and expensive_operation is only run once.\n\nBut it would be great to have an API on Dataset like `.barrier()` to introduce an explicit barrier to whole-stage codegen without adding any additional behavior or getting in the way of any PushDown optimizations.",
+    "verdict": "needs_development",
+    "explanation": "There is no existing Dataset API or config in the provided docs to insert an explicit whole-stage-codegen barrier, so this would require new Spark code. The provided docs do not show any such barrier mechanism, so it cannot be done today with a documented API.",
+    "doc_reference": null,
+    "chunk_id": "streaming/apis-on-dataframes-and-datasets#012",
+    "chunk_text": "Structured Streaming Programming Guide > API using Datasets and DataFrames > Operations on streaming DataFrames/Datasets > Basic Operations - Selection, Projection, Aggregation\n\n```java\nimport org.apache.spark.api.java.function.*;\nimport org.apache.spark.sql.*;\nimport org.apache.spark.sql.expressions.javalang.typed;\nimport org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;\n\npublic class DeviceData {\n  private String device;\n  private String deviceType;\n  private Double signal;\n  private java.sql.Date time;\n  ...\n  // Getter and setter methods for each field\n}\n\nDataset<Row> df = ...;    // streaming DataFrame with IOT device data with schema { device: string, type: string, signal: double, time: DateType }\nDataset<DeviceData> ds = df.as(ExpressionEncoder.javaBean(DeviceData.class)); // streaming Dataset with IOT device data\n\n// Select the devices which have signal more than 10\ndf.select(\"device\").where(\"signal > 10\"); // using untyped APIs\nds.filter((FilterFunction<DeviceData>) value -> value.getSignal() > 10)\n  .map((MapFunction<DeviceData, String>) value -> value.getDevice(), Encoders.STRING());\n\n// Running count of the number of updates for each device type\ndf.groupBy(\"deviceType\").count(); // using untyped API\n\n// Running average signal for each device type\nds.groupByKey((MapFunction<DeviceData, String>) value -> value.getDeviceType(), Encoders.STRING())\n  .agg(typed.avg((MapFunction<DeviceData, Double>) value -> value.getSignal()));\n```\n\n```r\ndf <- ...  # streaming DataFrame with IOT device data with schema { device: string, deviceType: string, signal: double, time: DateType }\n\n# Select the devices which have signal more than 10\nselect(where(df, \"signal > 10\"), \"device\")\n\n# Running count of the number of updates for each device type\ncount(groupBy(df, \"deviceType\"))\n```\n\nYou can also register a streaming DataFrame/Dataset as a temporary view and then apply SQL commands on it.\n\n```python\ndf.createOrReplaceTempView(\"updates\")\nspark.sql(\"select count(*) from updates\")  # returns another streaming DF\n```\n\n```scala\ndf.createOrReplaceTempView(\"updates\")\nspark.sql(\"select count(*) from updates\")  // returns another streaming DF\n```",
+    "judge_run1": false,
+    "judge_reasoning": "The provided documentation chunk discusses basic operations on streaming DataFrames and Datasets such as selection, projection, aggregation, and temporary views, but does not mention anything about manually breaking up a dataset plan or whole-stage-codegen barriers."
+   }
+  ],
+  "metrics": {
+   "n": 5,
+   "failures": 0,
+   "accuracy": 0.4,
+   "accuracy_ci95": [
+    0.0,
+    0.8
+   ],
+   "majority_label": "needs_development",
+   "majority_baseline": 0.6,
+   "macro_f1": 0.143,
+   "macro_f1_ci95": [
+    0.0,
+    0.222
+   ],
+   "per_class": {
+    "already_supported": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 1
+    },
+    "needs_development": {
+     "precision": 0.5,
+     "recall": 0.667,
+     "f1": 0.571,
+     "support": 3
+    },
+    "out_of_scope": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 1
+    },
+    "insufficient_info": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 0
+    }
+   },
+   "gold_counts": {
+    "already_supported": 1,
+    "needs_development": 3,
+    "out_of_scope": 1,
+    "insufficient_info": 0
+   },
+   "pred_counts": {
+    "already_supported": 0,
+    "needs_development": 4,
+    "out_of_scope": 0,
+    "insufficient_info": 1
+   },
+   "confusion": [
+    [
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     2,
+     0,
+     1,
+     0
+    ],
+    [
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "items_without_citation": 1,
+   "invalid_citation_rate": 0.143,
+   "citation_support_rate": 0.333,
+   "n_citations_judged": 6,
+   "doc_reference_grounded": null,
+   "ungrounded_references": [],
+   "explanation_le_2_sentences": 1.0
+  },
+  "calls": {
+   "calls": 6,
+   "call_errors": 0,
+   "repairs": 1,
+   "latency_p50_ms": 1900,
+   "latency_p95_ms": 2385,
+   "prompt_tokens": 12272,
+   "completion_tokens": 1385,
+   "cost": 0.001631,
+   "cost_per_100_calls": 0.02719
+  },
+  "judge_calls": {
+   "calls": 6,
+   "call_errors": 0,
+   "repairs": 0,
+   "latency_p50_ms": 1033,
+   "latency_p95_ms": 1368,
+   "prompt_tokens": 4287,
+   "completion_tokens": 348,
+   "cost": 0.002156,
+   "cost_per_100_calls": 0.03594
+  }
+ },
+ "all": {
+  "3": [
+   {
+    "key": "SPARK-26008",
+    "output": {
+     "rationale": "The request asks for a user-facing, externally controlled clock injected into DataStreamWriter/query execution so that time-dependent operators (e.g. processing-time timeouts in mapGroupsWithState) can be simulated deterministically outside tests. The provided excerpts only cover Real-time Mode (Trigger.RealTime, its configs, and transformWithState behavior), and explicitly state that processing-time timers use the live clock; they show no public API for supplying a custom trigger clock, and the Internal StreamTest clock is test-only. Nothing in the excerpts indicates such a parameter exists or is planned, so this would require new development in Spark's streaming scheduler/clock plumbing.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "streaming/real-time-mode#000",
+      "streaming/structured-streaming-transform-with-state#009",
+      "streaming/real-time-mode#024"
+     ],
+     "explanation": "The provided docs do not show any public way to pass a custom clock to DataStreamWriter or a query; the only clock-related behavior documented is that processing-time timers use the live clock. Exposing an externally controlled clock would require new Spark code in the streaming scheduler, so this is a development request rather than something available today.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "streaming/real-time-mode#000",
+     "streaming/structured-streaming-transform-with-state#009",
+     "streaming/real-time-mode#024"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-26417",
+    "output": {
+     "rationale": "The request asks to add state descriptions (like comments) to `SparkListener` states, suggesting changes to the constructor or an enum flag in `SparkAppHandle.State`. The provided documentation focuses entirely on configuring and using Spark Event Logs for post-mortem UI reconstruction, not on adding descriptive metadata to internal listener states. Therefore, this feature requires code changes within Spark itself.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      ""
+     ],
+     "explanation": "The current documentation does not mention adding descriptive comments to internal Spark listener states. Implementing this feature would require changes to the Spark codebase.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "configuration#037",
+     "monitoring#000",
+     "configuration#038"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-27170",
+    "output": {
+     "rationale": "The request asks for a better SQL parser error message for an extraneous comma, with correct line numbers and a Presto-like 'mismatched input' style. The excerpt sql-ref-identifier#002 shows Spark 4.3 emitting PARSE_SYNTAX_ERROR with the offending token and a line/pos pointer plus a SQL snippet with a caret, which is essentially the improved error format requested. However, the request is about a specific parser behavior (extraneous comma) and the excerpts do not demonstrate that exact case, nor do they expose any API/config to control the message. Since the general improved parse-error reporting is shown as existing behavior, the closest verdict is already_supported, but no concrete API/config name appears in the excerpts, so doc_reference is left null and the explanation notes the docs do not show a specific API.",
+     "verdict": "insufficient_info",
+     "cited_chunk_ids": [
+      "sql-ref-identifier#002"
+     ],
+     "explanation": "The provided docs show Spark 4.3 already reports parse errors as PARSE_SYNTAX_ERROR with the offending token and a line/position pointer, which resembles the improved message you asked for. However, the docs do not show a specific API or config for this behavior, nor the exact extraneous-comma case, so it cannot be confirmed as fully supported.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-migration-guide#020",
+     "sql-migration-guide#050",
+     "sql-ref-identifier#002"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-28505",
+    "output": {
+     "rationale": "The request asks for a new data source option to drop partition columns from the output files when writing to file sources. The excerpts cover CSV options generally (header, delimiter, charset) and generic file source options (ignoreCorruptFiles, ignoreMissingFiles), plus migration notes on partition column validation. None of these describe an option to omit partition columns from written data. The docs do not show such an API/config, so it is not already supported; it is a reasonable Spark feature but needs implementation, hence needs_development.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [],
+     "explanation": "The provided docs only describe generic file source options like ignoreCorruptFiles/ignoreMissingFiles and CSV read/write options such as header and delimiter; they do not show any option to omit partition columns from written files. Since no such option appears in the excerpts, this would require new code in Spark's file writing path.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-data-sources-csv#000",
+     "sql-data-sources-generic-options#000",
+     "sql-migration-guide#057"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-29881",
+    "output": {
+     "rationale": "The request asks for a new Dataset API (`.barrier()`) to insert an explicit whole-stage-codegen barrier. None of the provided excerpts describe any such API, config, or mechanism for controlling codegen boundaries; they only cover general Dataset operations, SQL queries, streaming transforms, and stateful processing. Since the excerpts neither show an existing API for this nor contradict Spark's design, the feature would require new code, but the docs give no basis to confirm feasibility details beyond that it is a reasonable Spark-level enhancement.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "sql-getting-started#003",
+      "streaming/apis-on-dataframes-and-datasets#012"
+     ],
+     "explanation": "There is no existing Dataset API or config in the provided docs to insert an explicit whole-stage-codegen barrier, so this would require new Spark code. The provided docs do not show any such barrier mechanism, so it cannot be done today with a documented API.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-getting-started#003",
+     "streaming/real-time-mode#022",
+     "streaming/apis-on-dataframes-and-datasets#012"
+    ],
+    "doc_reference_grounded": null
+   }
+  ],
+  "5": [
+   {
+    "key": "SPARK-26008",
+    "output": {
+     "rationale": "The request asks for an externally controlled/simulated clock to be passable through DataStreamWriter and the query, so that clock-dependent operators like mapGroupsWithState execution-time timeouts can be deterministically simulated outside tests. The provided excerpts cover Real-time Mode (triggers, checkpoint intervals, stateful operator support, configs) and asynchronous progress tracking, but none of them expose or mention any clock-injection parameter on DataStreamWriter or a query-level clock. The excerpts do not show any such API or config, so the feature is not currently supported per the given docs; however, adding a pluggable clock to the streaming execution path is a plausible Spark code change, so it is needs_development rather than out_of_scope.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "streaming/real-time-mode#000",
+      "streaming/real-time-mode#009",
+      "streaming/structured-streaming-transform-with-state#009",
+      "streaming/real-time-mode#024",
+      "streaming/performance-tips#000"
+     ],
+     "explanation": "The provided docs do not show any way to pass an external or simulated clock to DataStreamWriter or a running query; the documented triggers and Real-time Mode only control batch/checkpoint intervals, not the execution clock used by timeouts. Supporting a user-supplied clock would require changes to Spark's streaming execution code, so this is a development request rather than something available today.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "streaming/real-time-mode#000",
+     "streaming/structured-streaming-transform-with-state#009",
+     "streaming/real-time-mode#024",
+     "streaming/performance-tips#000",
+     "streaming/real-time-mode#009"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-26417",
+    "output": {
+     "rationale": "The request asks to expose human-readable descriptions (currently only code comments) and a finalization flag for the `org.apache.spark.launcher.SparkAppHandle.State` enum, so custom `SparkListener`s can log state descriptions. This is a small, reasonable API enhancement to Spark's launcher module, but none of the provided excerpts document `SparkAppHandle`, its `State` enum, or any listener API for state descriptions; the excerpts only cover event-log configs, monitoring/history server, and YARN logging. Since the change requires new code (adding fields/accessors to the enum) and is not achievable with any existing documented API/config, it is needs_development.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "monitoring#000",
+      "configuration#038"
+     ],
+     "explanation": "The provided docs do not show any API for `SparkAppHandle.State` descriptions or a finalization flag, so this cannot be done today with an existing config or API. Adding description/finalization metadata to the enum is a reasonable small enhancement to Spark's launcher module and would require code changes.",
+     "doc_reference": ""
+    },
+    "retrieved": [
+     "configuration#037",
+     "monitoring#000",
+     "configuration#038",
+     "monitoring#010",
+     "running-on-yarn#005"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-27170",
+    "output": {
+     "rationale": "The user is requesting an improvement to the error message for a specific SQL syntax error (extraneous comma) to make it clearer, similar to Presto's error reporting. The provided documentation excerpts discuss SQL migration, identifier syntax, and general error conditions, but they do not contain any information about the specific error messages generated by the Spark SQL parser for syntax errors like an extraneous comma, nor do they suggest a path for improving these messages.\n",
+     "verdict": "insufficient_info",
+     "cited_chunk_ids": [],
+     "explanation": "The provided documentation excerpts do not contain information regarding the specific error messages generated by the Spark SQL parser for syntax errors like an extraneous comma. Therefore, I cannot determine if this feature is already supported or requires development.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-migration-guide#020",
+     "sql-migration-guide#050",
+     "sql-ref-identifier#002",
+     "sql-error-conditions#000",
+     "sql-migration-guide#047"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-28505",
+    "output": {
+     "rationale": "The request wants partition columns omitted from file contents (like Hive). The provided CSV and generic file-source excerpts show how data source options are set but list no option that omits partition columns from output. The other excerpts (migration guide's `spark.sql.sources.validatePartitionColumns`, INSERT OVERWRITE DIRECTORY OPTIONS, streaming source options) are unrelated. So no existing API/config does this today; it would need new code in Spark's file writers — hence needs_development.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "sql-data-sources-csv#000",
+      "sql-data-sources-generic-options#000"
+     ],
+     "explanation": "The provided docs describe the `.option()` mechanism for CSV and the generic file source options, but neither shows any existing option that would drop partition columns from the written file contents. This is a reasonable Spark enhancement, but it would require adding new write-side behavior rather than being achievable with an existing API or config.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-data-sources-csv#000",
+     "sql-data-sources-generic-options#000",
+     "sql-migration-guide#057",
+     "sql-ref-syntax-dml-insert-overwrite-directory#001",
+     "streaming/apis-on-dataframes-and-datasets#005"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-29881",
+    "output": {
+     "rationale": "The request asks for a new Dataset API (`.barrier()`) to insert an explicit whole-stage-codegen barrier. None of the provided excerpts document any such API, codegen barrier control, or plan-breaking mechanism; they cover general DataFrame operations, streaming stateful operators, and SQLTransformer. Since the feature would require new code in Spark's optimizer/codegen and is a reasonable Spark-level capability, the verdict is needs_development, and the docs do not show any existing API for this.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "sql-getting-started#003",
+      "streaming/apis-on-dataframes-and-datasets#012"
+     ],
+     "explanation": "The provided docs do not show any existing Dataset API or config for inserting an explicit whole-stage-codegen barrier, so this would require new Spark code. It is a reasonable addition to Spark's optimizer/codegen, but not something available today.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-getting-started#003",
+     "streaming/real-time-mode#022",
+     "streaming/apis-on-dataframes-and-datasets#012",
+     "streaming/apis-on-dataframes-and-datasets#042",
+     "ml-features#030"
+    ],
+    "doc_reference_grounded": null
+   }
+  ],
+  "8": [
+   {
+    "key": "SPARK-26008",
+    "output": {
+     "rationale": "The request asks for a user-facing, externally controlled clock injectable into DataStreamWriter/query so that execution-time-based logic (e.g. mapGroupsWithState processing-time timeouts) can be simulated deterministically outside tests. The provided excerpts cover Real-time Mode triggers, transformWithState, async progress tracking, and migration notes, but none expose or document any clock-injection API or config on DataStreamWriter; the only clock-related statement is that processing-time timers use the live clock. Since the excerpt that would show such support is not present, and the feature would require new public API surface in Spark, this is a development request rather than something doable today.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "streaming/real-time-mode#009",
+      "streaming/structured-streaming-transform-with-state#009",
+      "streaming/real-time-mode#024"
+     ],
+     "explanation": "The provided docs do not show any way to supply an external or simulated clock to DataStreamWriter or a running query; processing-time timers are documented as using the live clock. Exposing a controllable clock for production queries would require new Spark API, so this is a feature request rather than something available today.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "streaming/real-time-mode#000",
+     "streaming/structured-streaming-transform-with-state#009",
+     "streaming/real-time-mode#024",
+     "streaming/performance-tips#000",
+     "streaming/real-time-mode#009",
+     "streaming/real-time-mode#021",
+     "streaming/index#000",
+     "streaming/ss-migration-guide#004"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-26417",
+    "output": {
+     "rationale": "The request asks for the descriptions of `SparkAppHandle.State` enum values (currently only in code comments) to be exposed via the constructor/API so a custom `SparkListener` can log them. The provided excerpts cover event logging configs, history server, UI, and log4j options, but none describe the `SparkAppHandle.State` enum or any API for retrieving state descriptions. Since the excerpt that would show support is not among those given, I cannot confirm an existing API.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "monitoring#000",
+      "configuration#038"
+     ],
+     "explanation": "The provided docs do not show any API exposing descriptions for `SparkAppHandle.State` values, so this would require adding such metadata to the enum/API. It is a reasonable enhancement to Spark's launcher module rather than something achievable via existing configuration.",
+     "doc_reference": ""
+    },
+    "retrieved": [
+     "configuration#037",
+     "monitoring#000",
+     "configuration#038",
+     "monitoring#010",
+     "running-on-yarn#005",
+     "configuration#018",
+     "monitoring#004",
+     "configuration#044"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-27170",
+    "output": {
+     "rationale": "The request asks for an improved parser error message (correct line number and clearer text) for a SQL statement with an extraneous leading comma. The provided excerpts show that Spark 4.3.0 already emits structured parse errors like `[PARSE_SYNTAX_ERROR] Syntax error at or near '.': extra input '.'(line 1, pos 20)` with a caret pointing at the offending position, and there is an error-conditions catalog. However, none of the excerpts demonstrate the specific behavior for an extraneous comma in a SELECT list, nor any config/API to change parser error messages. Improving the message would require parser/code changes, so it is a reasonable Spark enhancement rather than something doable today via an existing API.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "sql-ref-identifier#002",
+      "sql-error-conditions#000",
+      "sql-ref-syntax-qry-select#000"
+     ],
+     "explanation": "Spark 4.3.0 already produces structured `[PARSE_SYNTAX_ERROR]` messages with line/position and a caret, but the provided docs do not show how an extraneous comma in a SELECT list is reported, and there is no config or API to customize parser messages. Making that specific error clearer and correctly located would require changes to the SQL parser, so this is a reasonable enhancement rather than something available today.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-migration-guide#020",
+     "sql-migration-guide#050",
+     "sql-ref-identifier#002",
+     "sql-error-conditions#000",
+     "sql-migration-guide#047",
+     "sql-migration-guide#019",
+     "sql-ref-syntax-qry-select#000",
+     "sql-ref-identifier#000"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-28505",
+    "output": {
+     "rationale": "The request asks for a write-time option to omit partition columns from the data files (Hive-style behavior). The provided excerpts describe CSV write options generally and partition discovery on read, but none of them show any existing option or config that drops partition columns from written files. The CSV data source option excerpt lists read-side options only, and the generic file source options cover ignoreCorruptFiles/ignoreMissingFiles. So the provided docs do not show an existing API for this, but it is a reasonable feature for Spark's file data sources to add.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [
+      "sql-data-sources-csv#000",
+      "sql-data-sources-csv#005",
+      "sql-data-sources-generic-options#000",
+      "sql-data-sources-parquet#001"
+     ],
+     "explanation": "The provided docs do not show any existing write option that omits partition columns from the output files, so this cannot be done today with a documented API. It is a reasonable enhancement to Spark's file data sources and would require code changes to add such an option.",
+     "doc_reference": ""
+    },
+    "retrieved": [
+     "sql-data-sources-csv#000",
+     "sql-data-sources-generic-options#000",
+     "sql-migration-guide#057",
+     "sql-ref-syntax-dml-insert-overwrite-directory#001",
+     "streaming/apis-on-dataframes-and-datasets#005",
+     "sql-data-sources-csv#005",
+     "sql-data-sources-parquet#001",
+     "sql-performance-tuning#021"
+    ],
+    "doc_reference_grounded": null
+   },
+   {
+    "key": "SPARK-29881",
+    "output": {
+     "rationale": "No excerpt mentions a barrier, whole-stage codegen control, or any similar Dataset API; the excerpts are all about streaming, SQL transformers, RDDs, etc. Adding such an API is a plausible Spark feature requiring engine/API changes, not a third-party concern.",
+     "verdict": "needs_development",
+     "cited_chunk_ids": [],
+     "explanation": "The provided docs do not show any Dataset API or config for inserting a whole-stage-codegen barrier, so what you want isn't available today. Adding a `.barrier()` method would be a reasonable Spark code change (a new Dataset operation / planning hook), so it fits Spark but needs development.",
+     "doc_reference": null
+    },
+    "retrieved": [
+     "sql-getting-started#003",
+     "streaming/real-time-mode#022",
+     "streaming/apis-on-dataframes-and-datasets#012",
+     "streaming/apis-on-dataframes-and-datasets#042",
+     "ml-features#030",
+     "streaming/apis-on-dataframes-and-datasets#013",
+     "sql-migration-guide#064",
+     "rdd-programming-guide#021"
+    ],
+    "doc_reference_grounded": null
+   }
+  ]
+ }
+}

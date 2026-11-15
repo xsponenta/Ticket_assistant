@@ -192,6 +192,17 @@ def main() -> None:
 
     # ---------------- docs
     w("## Doc chunks\n")
+    if dc.get("generated_reference_chunks"):
+        w("- **CRISP-DM iteration (2026-11-15).** The generated reference tables were missing from the corpus. "
+          "`sql-ref-functions-builtin.md` and `configuration.md` include them with `{% include_api_gen %}` at site-build time, "
+          "and this step stripped Liquid tags, so the SQL built-in functions and the runtime/static SQL configs were lost. "
+          "Found during C3 modelling, where requests such as \"json_array_length\" could not be confirmed from the docs. "
+          "Fix: `src/data/fetch_doc_tables.py` stores the rendered pages (`data/raw/docs_generated/`), and "
+          "`chunk_docs.py` adds their tables on `<page>__generated` pages. All existing chunk ids and texts are unchanged.")
+        w("- **CRISP-DM iteration 2 (2026-11-15).** As 111 list chunks of ~40 entries, the reference was still not "
+          "retrieved for single-function requests (one entry is diluted in its list). It is now chunked one entry per chunk "
+          f"(`entry_chunks`, prefix `title > heading`): {dc['generated_reference_chunks']} chunks. They are short "
+          "by design and account for most chunks under 300 tokens below.")
     t = dc["tokens"]
     w(f"- **Input:** Spark {dc['version']} docs, {dc['pages_in']} pages; skipped {', '.join(dc['pages_skipped'])}; "
       f"{dc['pages_chunked']} pages chunked.")

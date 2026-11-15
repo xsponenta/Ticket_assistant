@@ -242,7 +242,7 @@
     }
   },
   "doc_chunks": {
-    "updated_at": "2026-11-15T12:02:51+00:00",
+    "updated_at": "2026-11-15T15:38:53+00:00",
     "version": "4.3.0",
     "pages_in": 245,
     "pages_skipped": [
@@ -250,17 +250,18 @@
       "README"
     ],
     "pages_chunked": 243,
-    "chunks": 2034,
-    "tokens_total": 763422,
+    "chunks": 2932,
+    "generated_reference_chunks": 898,
+    "tokens_total": 821359,
     "tokens": {
       "min": 10,
-      "p10": 202,
-      "median": 409,
-      "p90": 490,
+      "p10": 40,
+      "median": 319,
+      "p90": 487,
       "max": 500
     },
-    "share_lt_300": 0.231,
-    "share_300_500": 0.769,
+    "share_lt_300": 0.465,
+    "share_300_500": 0.535,
     "share_gt_500": 0.0,
     "tokenizer": "tiktoken cl100k_base"
   }

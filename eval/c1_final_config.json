@@ -1,0 +1,14 @@
+{
+  "approved_at": "2026-11-15",
+  "approved_by": "user",
+  "source": "eval/results/c1_val_20261115T135541Z.json",
+  "prompt_version": "c1_classifier/v1",
+  "baseline": {
+    "full": {"C_class": 1.0, "C_component": 10.0},
+    "summary": {"C_class": 0.3, "C_component": 3.0}
+  },
+  "llm": {
+    "full": {"k": 2},
+    "summary": {"k": 4}
+  }
+}

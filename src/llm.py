@@ -33,7 +33,7 @@ import threading
 import time
 import warnings
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -108,6 +108,7 @@ class Settings:
     models_cache: Path
     models: dict[str, str]
     temperature: dict[str, float]
+    reasoning: dict[str, dict[str, Any] | None] = field(default_factory=dict)  # per-role OpenRouter setting
 
 
 def load_settings(path: Path = CONFIG_PATH) -> Settings:
@@ -122,6 +123,7 @@ def load_settings(path: Path = CONFIG_PATH) -> Settings:
         models_cache=ROOT / llm["models_cache"],
         models=dict(cfg["models"]),
         temperature={k: float(v) for k, v in cfg["temperature"].items()},
+        reasoning=dict(cfg.get("reasoning") or {}),
     )
 
 
@@ -400,15 +402,27 @@ def _with_schema_instruction(messages: list[dict[str, Any]], schema: type[BaseMo
 
 
 def _parse(text: str, schema: type[BaseModel]) -> BaseModel:
-    """Strip markdown code fences / surrounding prose and validate."""
+    """Find the JSON object in the reply and validate it.
+
+    Candidates, in order: the whole reply; the reply minus ONE surrounding ```json fence; the span from the first
+    '{' to the last '}'. The first candidate that is valid JSON is validated against the schema (its schema error is
+    raised as is). Fences are never searched inside the reply, because JSON string values often contain code blocks.
+    """
     body = text.strip()
-    fenced = re.search(r"```(?:json)?\s*(.*?)```", body, re.S)
+    candidates = [body]
+    fenced = re.fullmatch(r"```(?:json)?\s*(.*)\s*```", body, re.S)
     if fenced:
-        body = fenced.group(1).strip()
-    elif not body.startswith("{"):
-        start, end = body.find("{"), body.rfind("}")
-        body = body[start : end + 1] if start != -1 and end > start else body
-    return schema.model_validate_json(body)
+        candidates.append(fenced.group(1).strip())
+    start, end = body.find("{"), body.rfind("}")
+    if start != -1 and end > start:
+        candidates.append(body[start : end + 1])
+    for candidate in candidates:
+        try:
+            data = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        return schema.model_validate(data)
+    return schema.model_validate_json(body)  # raises the JSON error of the whole reply
 
 
 # ---------------------------------------------------------------- public API
@@ -449,9 +463,13 @@ def complete(
 
     temperature=None uses the role default from config.yaml; the judge always runs at temperature 0.
     model: override of the role's model, for EXPERIMENT SCRIPTS ONLY (components always use roles).
-    reasoning: OpenRouter reasoning setting, e.g. {"effort": "none"} or {"enabled": False}.
-    Both are part of the request and therefore of the cache key.
+    reasoning: OpenRouter reasoning setting, e.g. {"effort": "none"} or {"enabled": False}. None = the role default
+    from config.yaml (`reasoning.<role>`), except with a `model` override: experiments then control reasoning
+    themselves and no role default is applied.
+    Model and reasoning are part of the request and therefore of the cache key.
     """
+    if reasoning is None and model is None:
+        reasoning = _settings().reasoning.get(role)
     model = _model_for(role, model)
     if role == "judge":
         temp = 0.0
@@ -546,9 +564,9 @@ def stats() -> int:
     if latencies:
         p95 = latencies[min(len(latencies) - 1, int(0.95 * len(latencies)))]
         print(f"latency (uncached): p50 {statistics.median(latencies):.0f} ms, p95 {p95:.0f} ms")
-    for field in ("role", "component", "model"):
-        counts = Counter(r[field] for r in rows)
-        print(f"by {field}: " + ", ".join(f"{k} {n}" for k, n in counts.most_common()))
+    for column in ("role", "component", "model"):
+        counts = Counter(r[column] for r in rows)
+        print(f"by {column}: " + ", ".join(f"{k} {n}" for k, n in counts.most_common()))
     return 0
 
 

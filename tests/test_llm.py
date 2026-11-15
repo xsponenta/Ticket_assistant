@@ -289,3 +289,35 @@ def test_reasoning_tokens_are_logged(setup, tmp_path):
     setup(Server([httpx2.Response(200, json=payload)]))
     llm.complete(USER, role="generator", component="c1")
     assert log_lines(tmp_path)[0]["reasoning_tokens"] == 321
+
+
+def test_json_with_code_fence_inside_a_value_parses_first_try(setup, tmp_path):
+    reply = json.dumps({"label": "bug", "confidence": 0.8, "note": "```python\nspark.range(1).show()\n```"})
+    setup(Server([chat(reply)]))
+    assert llm.complete(USER, role="generator", component="c1", schema=Verdict).label == "bug"
+    assert [r["repair"] for r in log_lines(tmp_path)] == [False]  # no repair call
+
+
+def test_parse_handles_fenced_reply_and_surrounding_prose():
+    obj = '{"label": "idea", "confidence": 0.5}'
+    assert llm._parse(f"```json\n{obj}\n```", Verdict).label == "idea"
+    assert llm._parse(f"Sure, here it is:\n{obj}\nHope this helps.", Verdict).label == "idea"
+    with pytest.raises(ValueError):
+        llm._parse("no json here", Verdict)
+
+
+def test_role_reasoning_defaults_from_config(setup, tmp_path):
+    server = Server(fn=lambda body: chat("x"))
+    setup(server)
+    settings = llm._settings()
+    llm.configure(
+        settings=llm.Settings(**{**settings.__dict__, "reasoning": {"generator": {"effort": "none"}, "judge": None}}),
+        http_client=llm._state["http_client"],
+        capabilities=llm._state["capabilities"],
+        tracing=False,
+    )
+    llm.complete(USER, role="generator", component="c1")  # role default
+    llm.complete(USER, role="generator", component="c1", reasoning={"effort": "low"})  # explicit wins
+    llm.complete(USER, role="judge", component="j")  # role default None -> not sent
+    llm.complete(USER, role="generator", component="x", model="other/m")  # model override -> no role default
+    assert [b.get("reasoning") for b in server.bodies] == [{"effort": "none"}, {"effort": "low"}, None, None]

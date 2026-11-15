@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import re
+from html.parser import HTMLParser
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,9 +26,14 @@ OUT = PROCESSED / "doc_chunks.jsonl"
 MIN_TOKENS, MAX_TOKENS = 300, 500
 SKIP_PAGES = {"README", "404"}  # build instructions for the docs site / error page, not user documentation
 # Values from docs/_config.yml of the downloaded release (v4.3.0).
-SITE_VARS = {"SPARK_VERSION": "4.3.0", "SPARK_VERSION_SHORT": "4.3.0", "SCALA_BINARY_VERSION": "2.13",
-             "SCALA_VERSION": "2.13.18", "SPARK_GITHUB_URL": "https://github.com/apache/spark",
-             "SPARK_ISSUE_TRACKER_URL": "https://issues.apache.org/jira/browse/SPARK"}
+SITE_VARS = {
+    "SPARK_VERSION": "4.3.0",
+    "SPARK_VERSION_SHORT": "4.3.0",
+    "SCALA_BINARY_VERSION": "2.13",
+    "SCALA_VERSION": "2.13.18",
+    "SPARK_GITHUB_URL": "https://github.com/apache/spark",
+    "SPARK_ISSUE_TRACKER_URL": "https://issues.apache.org/jira/browse/SPARK",
+}
 
 ENC = tiktoken.get_encoding("cl100k_base")
 FRONT_MATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
@@ -39,7 +45,8 @@ LIQUID_LINE_RE = re.compile(r"^[ \t]*\{%.*?%\}[ \t]*\n", re.M)  # whole-line tag
 LIQUID_TAG_RE = re.compile(r"\{%.*?%\}")
 SITE_VAR_RE = re.compile(r"\{\{\s*site\.(\w+)\s*\}\}")
 DROP_LINE_RE = re.compile(
-    r"^[ \t]*(?:\*[ \t]+This will become a table of contents.*|\{:[^}]*\}|</?div[^>]*>)[ \t]*\n", re.M | re.I)
+    r"^[ \t]*(?:\*[ \t]+This will become a table of contents.*|\{:[^}]*\}|</?div[^>]*>)[ \t]*\n", re.M | re.I
+)
 HEADER_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 # Fence line (also inside blockquotes: "> ```scala"); not inline code that closes on the same line ("```SELECT 1```").
 FENCE_RE = re.compile(r"^\s*(?:>\s*)*(```|~~~)(?!.*(?:```|~~~))")
@@ -56,13 +63,15 @@ def preprocess(raw: str, version: str) -> tuple[str, str]:
     if m:
         t = TITLE_RE.search(m.group(1))
         title = t.group(1).strip("\"'") if t else ""
-        raw = raw[m.end():]
+        raw = raw[m.end() :]
     body = COMMENT_RE.sub("", raw)
     body = HIGHLIGHT_RE.sub(lambda h: f"```{h.group(1)}", body)
     body = ENDHIGHLIGHT_RE.sub("```", body)
     body = LIQUID_LINE_RE.sub("", body)
     body = LIQUID_TAG_RE.sub("", body)
-    body = SITE_VAR_RE.sub(lambda v: SITE_VARS.get(v.group(1), version if "VERSION" in v.group(1) else v.group(0)), body)
+    body = SITE_VAR_RE.sub(
+        lambda v: SITE_VARS.get(v.group(1), version if "VERSION" in v.group(1) else v.group(0)), body
+    )
     body = DROP_LINE_RE.sub("", body)
     body = re.sub(r"\n{3,}", "\n\n", body).strip()
     return title, body
@@ -70,8 +79,8 @@ def preprocess(raw: str, version: str) -> tuple[str, str]:
 
 @dataclass
 class Section:
-    path: list[str]   # header path, e.g. ["Basic Concepts", "Handling Late Data"]
-    text: str         # header line (if any) + body
+    path: list[str]  # header path, e.g. ["Basic Concepts", "Handling Late Data"]
+    text: str  # header line (if any) + body
 
 
 def split_sections(body: str) -> list[Section]:
@@ -198,6 +207,92 @@ def chunk_page(title: str, body: str) -> list[tuple[list[str], str]]:
     return merged
 
 
+GENERATED = RAW / "docs_generated"
+# Rendered pages whose generated reference tables are missing from the Markdown sources (src/data/fetch_doc_tables.py):
+# page -> (title, which tables to keep). Each kept table row becomes one Markdown list line under its heading.
+GENERATED_PAGES = {
+    "sql-ref-functions-builtin": (
+        "Built-in Functions (reference tables)",
+        lambda heading, header: header[:1] == ["Function"],
+    ),
+    "configuration": (
+        "Spark Configuration (Spark SQL reference tables)",
+        lambda heading, header: heading in {"Runtime SQL Configuration", "Static SQL Configuration"},
+    ),
+}
+
+
+class _TableExtractor(HTMLParser):
+    """Headings (h1-h4) and tables (rows of cell texts) of an HTML page, in document order."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.events: list[tuple] = []
+        self._text: list[str] | None = None
+        self._rows: list[list[str]] | None = None
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        if tag in ("h1", "h2", "h3", "h4") or (tag in ("td", "th") and self._rows is not None):
+            self._text = []
+        elif tag == "table":
+            self._rows = []
+        elif tag == "tr" and self._rows is not None:
+            self._rows.append([])
+
+    def handle_endtag(self, tag: str) -> None:
+        text = " ".join("".join(self._text or []).split())
+        if tag in ("h1", "h2", "h3", "h4") and self._text is not None:
+            self.events.append(("heading", text))
+            self._text = None
+        elif tag in ("td", "th") and self._rows is not None and self._text is not None:
+            if self._rows:
+                self._rows[-1].append(text)
+            self._text = None
+        elif tag == "table" and self._rows is not None:
+            self.events.append(("table", [r for r in self._rows if r]))
+            self._rows = None
+
+    def handle_data(self, data: str) -> None:
+        if self._text is not None:
+            self._text.append(data)
+
+
+def generated_markdown(page: str, html: str) -> str:
+    """Markdown body (## heading + one list line per row) of the kept generated tables of a rendered page."""
+    keep = GENERATED_PAGES[page][1]
+    parser = _TableExtractor()
+    parser.feed(html)
+    heading, sections = "", []
+    for kind, value in parser.events:
+        if kind == "heading":
+            heading = value
+            continue
+        header, rows = value[0], value[1:]
+        if not rows or not keep(heading, header):
+            continue
+        if header[:1] == ["Function"]:
+            lines = [f"- `{r[0]}`: {r[1] if len(r) > 1 else ''}".rstrip() for r in rows]
+        else:  # Property Name | Default | Meaning | Since Version
+            lines = [
+                f"- `{r[0]}` (default: {r[1]}; since {r[3] if len(r) > 3 else '?'}): {r[2] if len(r) > 2 else ''}"
+                for r in rows
+            ]
+        sections.append(f"## {heading}\n\n" + "\n".join(lines))
+    return "\n\n".join(sections)
+
+
+def entry_chunks(title: str, body: str) -> list[tuple[list[str], str]]:
+    """One chunk per reference entry (list line), prefixed with title > heading: a long list chunk dilutes the one
+    entry a request is about, so dense retrieval misses it (CRISP-DM iteration 2, reports/decisions.md)."""
+    heading, chunks = "", []
+    for line in body.splitlines():
+        if line.startswith("## "):
+            heading = line[3:].strip()
+        elif line.startswith("- "):
+            chunks.append(([heading], prefix(title, [heading]) + line))
+    return chunks
+
+
 def main() -> None:
     source = (DOCS / "SOURCE.txt").read_text()
     version = re.search(r"tag:\s*v?(\S+)", source).group(1)
@@ -213,8 +308,40 @@ def main() -> None:
         title = title or page
         pages += 1
         for i, (header_path, text) in enumerate(chunk_page(title, body)):
-            rows.append({"chunk_id": f"{page}#{i:03d}", "page": page, "title": title, "header_path": header_path,
-                         "url": f"{base_url}{page}.html", "n_tokens": n_tokens(text), "text": text})
+            rows.append(
+                {
+                    "chunk_id": f"{page}#{i:03d}",
+                    "page": page,
+                    "title": title,
+                    "header_path": header_path,
+                    "url": f"{base_url}{page}.html",
+                    "n_tokens": n_tokens(text),
+                    "text": text,
+                }
+            )
+
+    # Generated reference tables (CRISP-DM iterations 1-2, reports/decisions.md): extra pages, one chunk per entry;
+    # existing ids unchanged.
+    generated = 0
+    for page, (title, _) in GENERATED_PAGES.items():
+        html_path = GENERATED / f"{page}.html"
+        if not html_path.exists():
+            print(f"WARNING: {html_path} missing — run src/data/fetch_doc_tables.py")
+            continue
+        body = generated_markdown(page, html_path.read_text(encoding="utf-8"))
+        for i, (header_path, text) in enumerate(entry_chunks(title, body)):
+            rows.append(
+                {
+                    "chunk_id": f"{page}__generated#{i:03d}",
+                    "page": f"{page}__generated",
+                    "title": title,
+                    "header_path": header_path,
+                    "url": f"{base_url}{page}.html",
+                    "n_tokens": n_tokens(text),
+                    "text": text,
+                }
+            )
+            generated += 1
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with OUT.open("w", encoding="utf-8") as f:
@@ -224,8 +351,13 @@ def main() -> None:
     toks = sorted(r["n_tokens"] for r in rows)
     q = lambda p: toks[min(len(toks) - 1, int(p * len(toks)))]
     stats = {
-        "version": version, "pages_in": pages + len(skipped), "pages_skipped": skipped, "pages_chunked": pages,
-        "chunks": len(rows), "tokens_total": sum(toks),
+        "version": version,
+        "pages_in": pages + len(skipped),
+        "pages_skipped": skipped,
+        "pages_chunked": pages,
+        "chunks": len(rows),
+        "generated_reference_chunks": generated,
+        "tokens_total": sum(toks),
         "tokens": {"min": toks[0], "p10": q(0.1), "median": q(0.5), "p90": q(0.9), "max": toks[-1]},
         "share_lt_300": round(sum(t < MIN_TOKENS for t in toks) / len(toks), 3),
         "share_300_500": round(sum(MIN_TOKENS <= t <= MAX_TOKENS for t in toks) / len(toks), 3),

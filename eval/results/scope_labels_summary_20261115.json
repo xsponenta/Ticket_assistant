@@ -1,0 +1,44 @@
+{
+ "labelled": 80,
+ "candidates": 80,
+ "label_distribution": {
+  "already_supported": 42,
+  "needs_development": 28,
+  "out_of_scope": 8,
+  "insufficient_info": 2
+ },
+ "majority_label": "already_supported",
+ "majority_class_accuracy": 0.525,
+ "agreement_with_resolution_hint": 0.188,
+ "hint_mapping": {
+  "Fixed": "needs_development",
+  "Won't Fix": "out_of_scope",
+  "Won't Do": "out_of_scope",
+  "Later": "out_of_scope",
+  "Invalid": "out_of_scope",
+  "Not A Problem": "already_supported",
+  "Incomplete": "insufficient_info"
+ },
+ "bucket_x_label": {
+  "declined": {
+   "needs_development": 11,
+   "already_supported": 11,
+   "out_of_scope": 3
+  },
+  "fixed": {
+   "already_supported": 16,
+   "needs_development": 7,
+   "out_of_scope": 2
+  },
+  "incomplete": {
+   "already_supported": 4,
+   "needs_development": 1
+  },
+  "not_a_problem_or_invalid": {
+   "already_supported": 11,
+   "needs_development": 9,
+   "out_of_scope": 3,
+   "insufficient_info": 2
+  }
+ }
+}

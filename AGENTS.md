@@ -16,8 +16,8 @@ Mapping from Jira `issuetype` (decision D1, see reports/decisions.md):
 | task | Task, Test, Documentation, Dependency upgrade | summary, goal, scope (in/out), definition_of_done |
 | idea | Wish, Brainstorming | summary, problem_hypothesis, target_users, expected_impact |
 
-All other types (incl. Sub-task) are excluded. Field definitions will live in
-`src/schemas/ticket_types.yaml` (single source of truth once created).
+All other types (incl. Sub-task) are excluded. Field definitions (required/optional, descriptions,
+Spark-specific examples) live in `src/schemas/ticket_types.yaml`, the single source of truth.
 
 ## Data (done — do not rebuild without being asked)
 - Raw: `data/raw/` (gitignored, never modified). Processed:
@@ -75,6 +75,7 @@ Rules:
   - Every call is logged to `logs/llm_calls.jsonl`. Langfuse tracing runs only if keys are set.
   - `complete()` is thread-safe: eval scripts may parallelise with a `ThreadPoolExecutor` (4–8 workers).
   - Components always select models through `role`. Only experiment scripts (e.g. `scripts/model_bakeoff.py`) may use the `model=` / `reasoning=` overrides.
+- Retrieval: `src/retrieval/` (BM25, dense with a local embedder, hybrid RRF; Jira-key masking) is shared by C2 and C3. Corpus embeddings are cached in `data/processed/embeddings/` (embedder: `models.embedder`, L3).
 - Models: OpenRouter ids in `config.yaml`, chosen by the user from `scripts/list_models.py`. Never pick or change models yourself. The `embedder` is a local model and is not called through `src/llm.py`.
 - Prompts live in `src/prompts/<component>.md` with a version header. Never inline prompt strings.
 - Component I/O = pydantic models in `src/schemas/`. Components never import each other;

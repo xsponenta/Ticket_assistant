@@ -25,7 +25,6 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from string import Template
 from typing import Any, Literal
 
 import pandas as pd
@@ -38,6 +37,7 @@ from build_eval import BUG_SIGNAL_RES, bug_signals, n_words  # noqa: E402
 from list_models import fetch_models, per_million  # noqa: E402
 
 from src import llm  # noqa: E402
+from src.prompting import Prompt, load_prompt  # noqa: E402
 
 SEED = 42
 CLASSES = ["bug", "feature", "task", "idea"]
@@ -45,7 +45,6 @@ N_PER_CLASS, N_EXTRACT, N_SIMULATOR = 10, 10, 5
 CLS_DESC_CHARS, EXTRACT_DESC_CHARS = 1500, 6000
 GROUNDING_MIN_SHARE = 0.6
 WORKERS = 6
-PROMPTS_DIR = ROOT / "src" / "prompts"
 RESULTS_DIR = ROOT / "eval" / "results"
 REPORT_PATH = ROOT / "reports" / "model_selection.md"
 SEP = "|"  # session id separator (model ids contain "/" and sometimes ":")
@@ -83,26 +82,6 @@ class BugExtraction(BaseModel):
 EXTRACTION_FIELDS = list(BugExtraction.model_fields)
 
 # ---------------------------------------------------------------- prompts
-
-
-@dataclass(frozen=True)
-class Prompt:
-    version: str
-    sections: dict[str, str]
-
-    def render(self, section: str, **values: str) -> str:
-        return Template(self.sections[section]).safe_substitute(values)
-
-
-def load_prompt(name: str) -> Prompt:
-    text = (PROMPTS_DIR / f"{name}.md").read_text(encoding="utf-8")
-    header = re.match(r"\A---\n(.*?)\n---\n", text, re.S)
-    if not header:
-        raise ValueError(f"{name}.md has no front-matter header")
-    version = re.search(r"^version:\s*(\S+)", header.group(1), re.M).group(1)
-    body = text[header.end() :]
-    sections = {m.group(1): m.group(2).strip() for m in re.finditer(r"^## (\w+)\n(.*?)(?=^## |\Z)", body, re.S | re.M)}
-    return Prompt(version, sections)
 
 
 def questions(prompt: Prompt) -> list[str]:
@@ -321,6 +300,14 @@ class Budget:
                     total += row.get("cost") or 0.0
         return total
 
+    def run_rows(self) -> list[dict[str, Any]]:
+        """Log lines written since the run started."""
+        if not self.log_path.exists():
+            return []
+        with self.log_path.open(encoding="utf-8") as f:
+            f.seek(self.offset)
+            return [json.loads(line) for line in f if line.strip()]
+
     def exceeded(self) -> bool:
         return self.spent() > self.limit
 
@@ -408,12 +395,30 @@ def grounding(extraction: dict[str, Any], input_text: str) -> list[dict[str, Any
 
 AI_RE = re.compile(r"\bas an ai\b|\bi am an ai\b|\bi'm an ai\b|language model|\bchatbot\b|\bsimulat(?:ion|ed)\b", re.I)
 FIRST_PERSON_RE = re.compile(r"\b(?:i|i'm|i've|i'd|my|me|we|our|us)\b", re.I)
-VOLUNTEER_RE = re.compile(r"\b(?:spark|pyspark|scala|python|java|jdk)\s*v?\d+(?:\.\d+)+", re.I)
+# Simulator checks v2 (revised after reading the v1 transcripts, see CHECKS_NOTE):
+# - Q1 "volunteered" = environment details other than the Spark version (a regression report's expected
+#   behaviour legitimately names Spark versions);
+# - Q3 honest = no invented number AND (admits not knowing OR answers only with ticket-grounded facts such as
+#   "I run it locally / in one Docker container" when the ticket says so).
+CHECKS_VERSION = "v2"
+CHECKS_NOTE = (
+    "Simulator checks v2, revised after reading the v1 transcripts and before choosing models: (1) the Q1 "
+    "'volunteered' check no longer counts Spark versions, because in 3 of the 5 tickets the expected behaviour "
+    "itself is a version regression (every model failed v1 on those 3); (2) Q3 honesty also accepts phrasings like "
+    '"I don\'t have those details" and answers grounded in the ticket (local run, single node, Docker, spark-shell).'
+)
+VOLUNTEER_RE = re.compile(
+    r"\b(?:python|java|jdk|scala)\s*v?\d+(?:\.\d+)+|\b(?:yarn|kubernetes|k8s|emr|databricks|dataproc|mesos)\b", re.I
+)
 UNKNOWN_RE = re.compile(
     r"not sure|don't know|do not know|no idea|unsure|not certain|can't (?:say|recall|remember)|"
-    r"cannot (?:say|recall|remember)|i'd have to check|haven't checked|don't have (?:that|this)|not something i",
+    r"cannot (?:say|recall|remember)|i'd have to check|haven't checked|not something i|"
+    r"don't have (?:any |the |those |that |this |exact |specific |precise |a |my )*"
+    r"(?:information|details|info|numbers?|figures?|settings?|data|count)|"
+    r"not (?:mentioned|specified|documented|recorded) in my|didn't (?:note|record|document|check)",
     re.I,
 )
+LOCAL_RE = re.compile(r"\blocal(?:ly)?\b|local\[|single[- ]node|\bone node\b|\bdocker\b|spark-shell|\blaptop\b", re.I)
 INVENTED_RE = re.compile(r"\b\d+(?:\.\d+)?\s*(?:nodes?|workers?|machines?|executors?|gb|gib|mb|g|m)\b", re.I)
 
 
@@ -436,9 +441,10 @@ def check_reply(question_no: int, reply: str, ticket: str) -> dict[str, bool]:
         "no_ticket_dump": ticket_containment(reply, ticket) < 0.4,
     }
     if question_no == 1:
-        checks["no_volunteered_version"] = not VOLUNTEER_RE.search(reply)
+        checks["no_volunteered_env"] = not VOLUNTEER_RE.search(reply)
     if question_no == 3:
-        checks["admits_unknown"] = bool(UNKNOWN_RE.search(reply))
+        grounded_local = bool(LOCAL_RE.search(reply) and LOCAL_RE.search(ticket))
+        checks["honest_about_unknown"] = bool(UNKNOWN_RE.search(reply)) or grounded_local
         checks["no_invented_number"] = not INVENTED_RE.search(reply)
     return checks
 
@@ -473,11 +479,22 @@ def call_metrics(calls: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def config_metrics(
-    cfg: Config, results: list[dict[str, Any]], log_rows: list[dict[str, Any]], inputs: dict[str, str]
+    cfg: Config,
+    results: list[dict[str, Any]],
+    log_rows: list[dict[str, Any]],
+    run_rows: list[dict[str, Any]],
+    inputs: dict[str, str],
 ) -> dict[str, Any]:
+    """Validity and repairs come from THIS run's log lines (`run_rows`); latency, tokens and cost come from the
+    first paid (uncached) call of each (session, repair) that this run used, wherever in the log it happened."""
     mine = [r for r in results if r["config"] == cfg.name]
-    first = first_calls(log_rows, cfg.name)
-    repaired = {tuple(sid.split(SEP)[3:5]) for (sid, rep) in first if rep}  # (task, key)
+    used = {
+        (row["session_id"], bool(row["repair"]))
+        for row in run_rows
+        if (row.get("session_id") or "").split(SEP)[2:3] == [cfg.name]
+    }
+    first = {k: v for k, v in first_calls(log_rows, cfg.name).items() if k in used}
+    repaired = {tuple(sid.split(SEP)[3:5]) for (sid, rep) in used if rep}  # (task, key)
     m: dict[str, Any] = {"overall": call_metrics(list(first.values()))}
 
     for task in ("classification", "extraction", "simulator"):
@@ -531,7 +548,7 @@ def config_metrics(
                 turn["checks"] = checks
                 replies.append(checks)
                 if no == 3:
-                    honest += checks["admits_unknown"] and checks["no_invented_number"]
+                    honest += checks["honest_about_unknown"] and checks["no_invented_number"]
         names = sorted({k for c in replies for k in c})
         m["simulator"].update(
             dialogues=len(sim),
@@ -615,7 +632,7 @@ def md_cell(text: Any, limit: int = 160) -> str:
     return s.replace("|", "\\|")
 
 
-def render_report(data: dict[str, Any]) -> str:
+def render_report(data: dict[str, Any], review: str | None = None) -> str:
     configs = [Config(**c) for c in data["configs"]]
     metrics, proposal = data["metrics"], data["proposal"]
     names = [c.name for c in configs]
@@ -683,8 +700,8 @@ def render_report(data: dict[str, Any]) -> str:
         "brief",
         "first_person",
         "no_ticket_dump",
-        "no_volunteered_version",
-        "admits_unknown",
+        "no_volunteered_env",
+        "honest_about_unknown",
         "no_invented_number",
     ]
     lines += [
@@ -692,8 +709,10 @@ def render_report(data: dict[str, Any]) -> str:
         f"## Simulated user (n = {len(data['items']['simulator'])} dialogues × 3 questions)",
         "",
         "Q3 asks for information that is **not** in the hidden ticket (cluster size, executor memory). "
-        "In character = a reply passes every check that applies to it. Q3 honest = admits not knowing and "
-        "invents no number.",
+        "In character = a reply passes every check that applies to it. Q3 honest = admits not knowing (or answers "
+        "only with ticket-grounded facts) and invents no number.",
+        "",
+        f"_{CHECKS_NOTE}_",
         "",
         "| Config | In character | Q3 honest | " + " | ".join(check_names) + " | Failures |",
         "|---|---:|---:|" + "---:|" * len(check_names) + "---:|",
@@ -765,9 +784,9 @@ def render_report(data: dict[str, Any]) -> str:
             "",
             "<details><summary>Input given to the models (first 800 characters)</summary>",
             "",
-            "```text",
+            "````text",  # 4 backticks: the excerpt itself may contain ``` code blocks
             data["inputs"][key][:800],
-            "```",
+            "````",
             "",
             "</details>",
             "",
@@ -800,6 +819,7 @@ def render_report(data: dict[str, Any]) -> str:
         f"| judge | `{proposal['judge']}` | different provider than the generator |",
         f"| simulator | `{proposal['simulator']}` | {', '.join(f'`{x}`' for x in proposal['simulator_pool']) or '—'} |",
         "",
+        *([review.strip(), ""] if review else []),
         "## Limitations",
         "",
         "- Small samples: 40 classification items (macro-F1 CIs are wide), 10 bugs, 5 dialogues. The bake-off "
@@ -854,8 +874,9 @@ def read_log() -> list[dict[str, Any]]:
         return [json.loads(line) for line in f if line.strip()]
 
 
-def write_report(data: dict[str, Any]) -> None:
-    REPORT_PATH.write_text(render_report(data), encoding="utf-8")
+def write_report(data: dict[str, Any], review: Path | None = None) -> None:
+    review_text = review.read_text(encoding="utf-8") if review else None
+    REPORT_PATH.write_text(render_report(data, review_text), encoding="utf-8")
     (ROOT / data["transcripts_file"]).write_text(render_transcripts(data), encoding="utf-8")
     print(f"Wrote {REPORT_PATH.relative_to(ROOT)} and {data['transcripts_file']}")
 
@@ -868,10 +889,11 @@ def main() -> None:
     )
     parser.add_argument("--budget", type=float, default=1.0, help="stop submitting calls above this spend (USD)")
     parser.add_argument("--report", type=Path, help="re-render reports/model_selection.md from a results file")
+    parser.add_argument("--review", type=Path, help="Markdown file with a hand-written review, inserted in the report")
     args = parser.parse_args()
 
     if args.report:
-        write_report(json.loads(args.report.read_text()))
+        write_report(json.loads(args.report.read_text()), args.review)
         return
     if not args.models:
         parser.error("--models is required (or --report)")
@@ -890,8 +912,8 @@ def main() -> None:
         f"budget ${args.budget:.2f}"
     )
     results = run(configs, items, val, prompts, budget)
-    log_rows = read_log()
-    metrics = {c.name: config_metrics(c, results, log_rows, inputs) for c in configs}
+    log_rows, run_rows = read_log(), budget.run_rows()
+    metrics = {c.name: config_metrics(c, results, log_rows, run_rows, inputs) for c in configs}
 
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     kind = "model_bakeoff_smoke" if args.limit else "model_bakeoff"
@@ -925,7 +947,7 @@ def main() -> None:
         print(f"  projected full run  TOTAL{'':<44} ${sum(projection.values()):.4f}")
         (ROOT / data["transcripts_file"]).write_text(render_transcripts(data), encoding="utf-8")
     else:
-        write_report(data)
+        write_report(data, args.review)
 
 
 if __name__ == "__main__":

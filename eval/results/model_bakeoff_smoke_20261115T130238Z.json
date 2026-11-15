@@ -1,0 +1,771 @@
+{
+ "created_at": "2026-11-15T13:02:38+00:00",
+ "git_commit": "87b1ed8-dirty",
+ "results_file": "eval/results/model_bakeoff_smoke_20261115T130238Z.json",
+ "transcripts_file": "eval/results/model_bakeoff_smoke_20261115T130238Z_transcripts.md",
+ "prompt_versions": {
+  "classification": "bakeoff_classification/v1",
+  "extraction": "bakeoff_extraction/v1",
+  "simulator": "bakeoff_simulator/v1"
+ },
+ "configs": [
+  {
+   "name": "elorian/glimpse@reasoning-min",
+   "model": "elorian/glimpse",
+   "reasoning": {
+    "enabled": false
+   },
+   "price_in": 0.6,
+   "price_out": 3.0,
+   "reasoning_default": "off"
+  },
+  {
+   "name": "qwen/qwen3.5-27b@reasoning-min",
+   "model": "qwen/qwen3.5-27b",
+   "reasoning": {
+    "enabled": false
+   },
+   "price_in": 0.26,
+   "price_out": 2.6,
+   "reasoning_default": "off"
+  },
+  {
+   "name": "bytedance-seed/seed-2-1-turbo@reasoning-min",
+   "model": "bytedance-seed/seed-2-1-turbo",
+   "reasoning": {
+    "enabled": false
+   },
+   "price_in": 0.5,
+   "price_out": 2.5,
+   "reasoning_default": "off"
+  }
+ ],
+ "items": {
+  "classification": [
+   "SPARK-47404",
+   "SPARK-34552",
+   "SPARK-31738",
+   "SPARK-6535"
+  ],
+  "extraction": [
+   "SPARK-46706"
+  ],
+  "simulator": [
+   "SPARK-46706"
+  ]
+ },
+ "inputs": {
+  "SPARK-46706": "percentile_approx regression since Spark 2.4\nOriginally reported in SPARK-40499, I'm opening a new issue as that original one was closed. It's not entirely clear if this regression exists on HEAD, but I haven't seen any changes that I would expect to address this. Here's what I reported in the other ticket.\n\n---\n\nChiming in, I'm currently hitting a similar issue while doing upgrades from Spark 2.4 to Spark 3.1.\n\nIn our case, we have an application with two queries that take `percentile_approx` of a fairly large dataset and reduce to only a few rows (reading 37 billion rows and aggregating to ~100 and ~7000 rows, with different groupBy keys respectively). This roughly what the query looks like:\n\n```java\nselect\n    col1,\n    percentile_approx(col2, 0.95) as q_95,\n    percentile_approx(col2, 0.99) as q_99,\n    percentile_approx(col2, 0.99) - percentile_approx(col2, 0.95) as q_diff\nfrom data\ngroup by 1\n```\n\nAlso, I do recognize this could be written more optimally as `percentile_approx(col2, array(0.95, 0.99))` to save on computation, this is just the snippet as it was when I stumbled on it :)\n\nWe've observed that the shuffle write stage is roughly the same time (and size) but the shuffle read is drastically slower. Note, in this application the shuffle read is also collecting for a broadcast. The difference for the shuffle read is from 15 minutes on Spark 2.4 to 5.7 hours on Spark 3.1, and that was after reducing the `percentile_approx` precision from the default (10000) to 100 on Spark 3.1. When left at 10000, the stage was exceeding 15 hours and hitting some of our application time limits.\n\n*Spark 2.4*\n\n!Screenshot 2024-01-05 at 3.53.10 PM.png!\n\n - Stage 2 (shuffle write): 11 minutes, 67647 tasks, 22 GiB shuffle write size\n - Stage 9 (shuffle read): 15 minutes, 396 tasks, 22 GiB shuffle read size\n\n*Spark 3.1*\n\n!Screenshot 2024-01-05 at 3.51.52 PM.png!\n\n - Stage 1 (shuffle write): 7.6 minutes, 67396 tasks, 178.7 GiB input size, 20.3 GiB shuffle write size\n - Stage 5 (shuffle read): 5.7 hours, 1331 tasks, 20.3 GiB shuffle read size\n\nPrior to digging further into this, I thought it may have been some AQE issue. That was incorrect and in fact the post-aggregation task/partition count was much worse without AQE, at about 150000.\n\nI dug into any relevant changes between Spark 2.4 and 3.1, as well as changes since 3.1, to see if there's anything significant. I just looked at PRs against `QuantileSummaries.scala` and `ApproximatePercentile.scala`, and ignored some docs, formatting, refactoring, or very simple behavioural changes. These are the notable changes with some commentary.\n\nFor changes between 2.4 and 3.1:\n1. <https://github.com/apache/spark/commit/de360e96d776f51c0fd7c31dcec142feabf3d543> which re-implements the QuantileSummaries `merge` algorithm rather deeply. This seems potentially relevant, especially since the shuffle reading which is likely just executing merging is struggling. That being said, I would have maybe expected this to also impact the partial_percentile_approx calculations too.\n1. <https://github.com/apache/spark/commit/023eb482b23b5d63d2157b3def9926673844e0a3> -appears to change the behaviour in evaluation for `case when` / conditional inputs. This is possibly relevant, but our SQL code only plumbs a primitive in. Our actual job is a little more complex and the SQL is over a subquery, but the subquery is not manipulating the column using for `percentile_approx`.- I misunderstood this change initially. It looks like an optimization to avoid reconstructing the data type for some parent plan nodes. Our SQL code does consume percentiles in some CaseWhen clauses, so I'll need to dig more into this.\n\nI didn't go far while looking into other code. I did not see relevant changes in `AggregatingAccumulator`.\n\nFor changes between 3.1 onwards to `ApproximatePercentile` and `QuantileSummaries`:\n1. (in 3.2) <https://github.com/apache/spark/commit/6f8c62047cea125d52af5dad7fb5ad3eadb7f7d0> which appears to optimize the `ApproxPercentiles.getPercentiles` function. It seems to only be executed on the final result collection and optimizes for cases like `percentile_approx(..., array(0.5, 0.9, 0.95), ...)` - multiple value percentile calculations.\n1. (in 3.2) <https://github.com/apache/spark/commit/0945baf90660a101ae0f86a39d4c91ca74ae5ee3> which appears to change some plan interfaces. It reads as though only impacted query compilation performance, rather than execution performance.\n\nBecause I'm not seeing any changes that may possible address this performance issue, I'm led to believe this is still an existing problem in Spark.\n\nI have some follow-up I'll do to dig into this further, namely:\n - Test the job with `percentile` to see if it performs better, although I'm a bit dubious we will get this to run with 37 billion input rows\n - Test the job on Spark 3.3, which we have production-ready in our environment\n - Observe some of the thread dumps / profiling for the stage with poor performance\n - Isolate, or otherwise rewrite, the ApproximatePercentile going into a CaseWhen in our specific SQL to narrow down if that change is related\n\nHere's an expanded version of our query, with irrelevant columns removed. I figured I'd include this after realizing the relevant of the CaseWhen parent node.\n\n```\nwith source_data as (\n  select col1, col2 -- ... additional columns\n  from <table>\n), percentiles as (\n  select\n      col1,\n      approx_percentile(col2, 0.95) as q_95,\n      approx_percentile(col2, 0.99) as q_99,\n      approx_percentile(col2, 0.99) - approx_percentile(col2, 0.95) as q_diff\n  from source_data\n  group by 1\n), calculations as (\n  select\n    col1,\n    case\n      when q_diff > 5 then q_95 + 5\n      else q_99\n    end as calculated_val\n  from percentiles\n)\n\nselect\n  /*+ BROADCAST (c) */\n  source_data.*, c.calculated_val\nfrom source_data\nleft join calculations as c using(col1)\n-- ... additional joins / broadcasts\n```\n\n---\n\nLater on, I found another app of ours with similarly unbearable regressions. The app previously performed in <2h"
+ },
+ "spent_this_run": 0.021714,
+ "budget_exceeded": false,
+ "metrics": {
+  "elorian/glimpse@reasoning-min": {
+   "overall": {
+    "calls": 8,
+    "call_errors": 0,
+    "latency_p50_ms": 1559,
+    "latency_p95_ms": 2849,
+    "prompt_tokens": 9434,
+    "completion_tokens": 894,
+    "reasoning_tokens": 0,
+    "cost": 0.006614,
+    "cost_unknown_calls": 0,
+    "cost_per_100_calls": 0.08268
+   },
+   "classification": {
+    "calls": {
+     "calls": 4,
+     "call_errors": 0,
+     "latency_p50_ms": 1559,
+     "latency_p95_ms": 1640,
+     "prompt_tokens": 1414,
+     "completion_tokens": 278,
+     "reasoning_tokens": 0,
+     "cost": 0.001682,
+     "cost_unknown_calls": 0,
+     "cost_per_100_calls": 0.04206
+    },
+    "n": 4,
+    "accuracy": 0.25,
+    "macro_f1": 0.25,
+    "macro_f1_ci": [
+     0.0,
+     0.25
+    ],
+    "first_try_valid": 1.0,
+    "repair_rate": 0.0,
+    "failures": 0
+   },
+   "extraction": {
+    "calls": {
+     "calls": 1,
+     "call_errors": 0,
+     "latency_p50_ms": 2849,
+     "latency_p95_ms": 2849,
+     "prompt_tokens": 1973,
+     "completion_tokens": 459,
+     "reasoning_tokens": 0,
+     "cost": 0.002561,
+     "cost_unknown_calls": 0,
+     "cost_per_100_calls": 0.25608
+    },
+    "n": 1,
+    "first_try_valid": 1.0,
+    "repair_rate": 0.0,
+    "failures": 0,
+    "confirmed_fields": 5,
+    "grounded_confirmed": 0.8,
+    "possibly_invented": 1,
+    "flags": [
+     {
+      "key": "SPARK-46706",
+      "field": "environment",
+      "share": 0.583,
+      "flagged": true,
+      "reason": "only 58% of its words are in the input"
+     }
+    ]
+   },
+   "simulator": {
+    "calls": {
+     "calls": 3,
+     "call_errors": 0,
+     "latency_p50_ms": 523,
+     "latency_p95_ms": 1642,
+     "prompt_tokens": 6047,
+     "completion_tokens": 157,
+     "reasoning_tokens": 0,
+     "cost": 0.002371,
+     "cost_unknown_calls": 0,
+     "cost_per_100_calls": 0.07904
+    },
+    "dialogues": 1,
+    "replies": 3,
+    "failures": 0,
+    "pass_rate": {
+     "admits_unknown": 1.0,
+     "brief": 1.0,
+     "first_person": 1.0,
+     "no_ai_mention": 1.0,
+     "no_invented_number": 1.0,
+     "no_ticket_dump": 1.0,
+     "no_volunteered_version": 0.0
+    },
+    "in_character": 0.667,
+    "q3_honest": 1
+   }
+  },
+  "qwen/qwen3.5-27b@reasoning-min": {
+   "overall": {
+    "calls": 8,
+    "call_errors": 0,
+    "latency_p50_ms": 1685,
+    "latency_p95_ms": 5096,
+    "prompt_tokens": 9469,
+    "completion_tokens": 821,
+    "reasoning_tokens": 0,
+    "cost": 0.004544,
+    "cost_unknown_calls": 0,
+    "cost_per_100_calls": 0.0568
+   },
+   "classification": {
+    "calls": {
+     "calls": 4,
+     "call_errors": 0,
+     "latency_p50_ms": 1685,
+     "latency_p95_ms": 3457,
+     "prompt_tokens": 1414,
+     "completion_tokens": 303,
+     "reasoning_tokens": 0,
+     "cost": 0.001103,
+     "cost_unknown_calls": 0,
+     "cost_per_100_calls": 0.02757
+    },
+    "n": 4,
+    "accuracy": 0.75,
+    "macro_f1": 0.667,
+    "macro_f1_ci": [
+     0.167,
+     0.75
+    ],
+    "first_try_valid": 1.0,
+    "repair_rate": 0.0,
+    "failures": 0
+   },
+   "extraction": {
+    "calls": {
+     "calls": 1,
+     "call_errors": 0,
+     "latency_p50_ms": 5096,
+     "latency_p95_ms": 5096,
+     "prompt_tokens": 1973,
+     "completion_tokens": 327,
+     "reasoning_tokens": 0,
+     "cost": 0.001363,
+     "cost_unknown_calls": 0,
+     "cost_per_100_calls": 0.13632
+    },
+    "n": 1,
+    "first_try_valid": 1.0,
+    "repair_rate": 0.0,
+    "failures": 0,
+    "confirmed_fields": 5,
+    "grounded_confirmed": 0.8,
+    "possibly_invented": 1,
+    "flags": [
+     {
+      "key": "SPARK-46706",
+      "field": "environment",
+      "share": 0.571,
+      "flagged": true,
+      "reason": "only 57% of its words are in the input"
+     }
+    ]
+   },
+   "simulator": {
+    "calls": {
+     "calls": 3,
+     "call_errors": 0,
+     "latency_p50_ms": 1028,
+     "latency_p95_ms": 1910,
+     "prompt_tokens": 6082,
+     "completion_tokens": 191,
+     "reasoning_tokens": 0,
+     "cost": 0.002078,
+     "cost_unknown_calls": 0,
+     "cost_per_100_calls": 0.06926
+    },
+    "dialogues": 1,
+    "replies": 3,
+    "failures": 0,
+    "pass_rate": {
+     "admits_unknown": 0.0,
+     "brief": 1.0,
+     "first_person": 1.0,
+     "no_ai_mention": 1.0,
+     "no_invented_number": 1.0,
+     "no_ticket_dump": 1.0,
+     "no_volunteered_version": 0.0
+    },
+    "in_character": 0.333,
+    "q3_honest": 0
+   }
+  },
+  "bytedance-seed/seed-2-1-turbo@reasoning-min": {
+   "overall": {
+    "calls": 9,
+    "call_errors": 0,
+    "latency_p50_ms": 2922,
+    "latency_p95_ms": 9583,
+    "prompt_tokens": 13721,
+    "completion_tokens": 1478,
+    "reasoning_tokens": 0,
+    "cost": 0.010555,
+    "cost_unknown_calls": 0,
+    "cost_per_100_calls": 0.11728
+   },
+   "classification": {
+    "calls": {
+     "calls": 4,
+     "call_errors": 0,
+     "latency_p50_ms": 2331,
+     "latency_p95_ms": 4259,
+     "prompt_tokens": 2197,
+     "completion_tokens": 208,
+     "reasoning_tokens": 0,
+     "cost": 0.001618,
+     "cost_unknown_calls": 0,
+     "cost_per_100_calls": 0.04046
+    },
+    "n": 4,
+    "accuracy": 0.5,
+    "macro_f1": 0.5,
+    "macro_f1_ci": [
+     0.0,
+     0.5
+    ],
+    "first_try_valid": 1.0,
+    "repair_rate": 0.0,
+    "failures": 0
+   },
+   "extraction": {
+    "calls": {
+     "calls": 2,
+     "call_errors": 0,
+     "latency_p50_ms": 8835,
+     "latency_p95_ms": 9583,
+     "prompt_tokens": 5251,
+     "completion_tokens": 1043,
+     "reasoning_tokens": 0,
+     "cost": 0.005233,
+     "cost_unknown_calls": 0,
+     "cost_per_100_calls": 0.26165
+    },
+    "n": 1,
+    "first_try_valid": 0.0,
+    "repair_rate": 1.0,
+    "failures": 0,
+    "confirmed_fields": 5,
+    "grounded_confirmed": 1.0,
+    "possibly_invented": 0,
+    "flags": []
+   },
+   "simulator": {
+    "calls": {
+     "calls": 3,
+     "call_errors": 0,
+     "latency_p50_ms": 2922,
+     "latency_p95_ms": 3478,
+     "prompt_tokens": 6273,
+     "completion_tokens": 227,
+     "reasoning_tokens": 0,
+     "cost": 0.003704,
+     "cost_unknown_calls": 0,
+     "cost_per_100_calls": 0.12347
+    },
+    "dialogues": 1,
+    "replies": 3,
+    "failures": 0,
+    "pass_rate": {
+     "admits_unknown": 1.0,
+     "brief": 1.0,
+     "first_person": 1.0,
+     "no_ai_mention": 1.0,
+     "no_invented_number": 1.0,
+     "no_ticket_dump": 1.0,
+     "no_volunteered_version": 0.0
+    },
+    "in_character": 0.667,
+    "q3_honest": 1
+   }
+  }
+ },
+ "proposal": {
+  "generator": "qwen/qwen3.5-27b@reasoning-min",
+  "judge": "bytedance-seed/seed-2-1-turbo@reasoning-min",
+  "simulator": null,
+  "generator_pool": [
+   "qwen/qwen3.5-27b@reasoning-min"
+  ],
+  "simulator_pool": []
+ },
+ "results": [
+  {
+   "config": "elorian/glimpse@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-47404",
+   "error": null,
+   "gold": "bug",
+   "pred": "feature",
+   "rationale": "The ticket requests adding new hooks to allow clearing the ANTLR DFA cache, which is a new capability to improve memory management and usability. It is not a bug because the current behavior is expected by ANTLR, but rather a request for an improvement."
+  },
+  {
+   "config": "elorian/glimpse@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-34552",
+   "error": null,
+   "gold": "feature",
+   "pred": "bug",
+   "rationale": "The ticket describes a discrepancy where `listPartitions` and `listPartitionsByFilter` fail to restore partition-level statistics that are correctly restored by `getPartition`, leading to inconsistent behavior between API calls. This is a bug because the behavior contradicts the expected consistency of the API and results in incorrect (missing) metadata in the returned objects."
+  },
+  {
+   "config": "elorian/glimpse@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-31738",
+   "error": null,
+   "gold": "task",
+   "pred": "task",
+   "rationale": "The ticket requests adding documentation to explain the difference between 'M' and 'L' month pattern letters and to provide examples. This is a documentation task that does not change user-facing behavior or add new functionality."
+  },
+  {
+   "config": "elorian/glimpse@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-6535",
+   "error": null,
+   "gold": "idea",
+   "pred": "feature",
+   "rationale": "The ticket proposes a new RDD method (`mapIO`) to handle asynchronous I/O operations with batching, which is a request for new functionality. Although the author asks for feedback on whether it is a good idea, the proposal includes a concrete API signature and specific implementation details, making it a feature request rather than an open-ended idea."
+  },
+  {
+   "config": "elorian/glimpse@reasoning-min",
+   "task": "extraction",
+   "key": "SPARK-46706",
+   "error": null,
+   "output": {
+    "summary": {
+     "value": "percentile_approx regression since Spark 2.4",
+     "status": "confirmed"
+    },
+    "steps_to_reproduce": {
+     "value": "Run a query aggregating a large dataset (37 billion rows) using `percentile_approx` with groupBy, then join the result back to the source using a broadcast hint. Example query:\nsql\nselect\n    col1,\n    percentile_approx(col2, 0.95) as q_95,\n    percentile_approx(col2, 0.99) as q_99,\n    percentile_approx(col2, 0.99) - percentile_approx(col2, 0.95) as q_diff\nfrom data\ngroup by 1\n\nExpanded version includes a CTE with `approx_percentile` and a `CASE WHEN` clause on the result, joined back to source with `/*+ BROADCAST (c) */`.",
+     "status": "confirmed"
+    },
+    "expected_behavior": {
+     "value": "Shuffle read stage performance should be comparable to Spark 2.4 (approx. 15 minutes).",
+     "status": "confirmed"
+    },
+    "actual_behavior": {
+     "value": "Shuffle read stage is drastically slower in Spark 3.1 compared to Spark 2.4. In Spark 2.4, shuffle read took 15 minutes. In Spark 3.1, it took 5.7 hours (with precision reduced to 100) or exceeded 15 hours (with default precision 10000). Shuffle write times remained roughly the same.",
+     "status": "confirmed"
+    },
+    "environment": {
+     "value": "Spark 2.4 vs Spark 3.1 (upgrading from 2.4 to 3.1). API language: SQL/Java. Deployment: Not explicitly stated, but implies a cluster environment with AQE enabled.",
+     "status": "confirmed"
+    }
+   },
+   "grounding": [
+    {
+     "field": "summary",
+     "share": 1.0,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "steps_to_reproduce",
+     "share": 0.828,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "expected_behavior",
+     "share": 0.818,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "actual_behavior",
+     "share": 0.833,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "environment",
+     "share": 0.583,
+     "flagged": true,
+     "reason": "only 58% of its words are in the input"
+    }
+   ]
+  },
+  {
+   "config": "elorian/glimpse@reasoning-min",
+   "task": "simulator",
+   "key": "SPARK-46706",
+   "error": null,
+   "transcript": [
+    {
+     "question": "What did you expect to happen, and what happened instead?",
+     "reply": "I expected the shuffle read stage to complete in roughly 15 minutes, matching the performance I saw on Spark 2.4. Instead, on Spark 3.1, the shuffle read took 5.7 hours even after reducing the precision to 100, and it exceeded 15 hours when left at the default precision of 10000.",
+     "checks": {
+      "no_ai_mention": true,
+      "brief": true,
+      "first_person": true,
+      "no_ticket_dump": true,
+      "no_volunteered_version": false
+     }
+    },
+    {
+     "question": "Which Spark version and which language API (Scala, Python, Java, SQL or R) are you using?",
+     "reply": "I am using Spark 3.1, having upgraded from Spark 2.4. The query is written in SQL, though I provided the snippet in a Java-like format.",
+     "checks": {
+      "no_ai_mention": true,
+      "brief": true,
+      "first_person": true,
+      "no_ticket_dump": true
+     }
+    },
+    {
+     "question": "How many nodes does your cluster have, and what exactly is your executor memory setting?",
+     "reply": "I am not sure about the exact number of nodes or the specific executor memory settings. My ticket only details the task counts and shuffle sizes for the Spark 2.4 and 3.1 runs.",
+     "checks": {
+      "no_ai_mention": true,
+      "brief": true,
+      "first_person": true,
+      "no_ticket_dump": true,
+      "admits_unknown": true,
+      "no_invented_number": true
+     }
+    }
+   ]
+  },
+  {
+   "config": "qwen/qwen3.5-27b@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-47404",
+   "error": null,
+   "gold": "bug",
+   "pred": "bug",
+   "rationale": "The ticket describes a memory leak issue where the ANTLR DFA cache grows unbounded, leading to excessive memory usage (>20GiB) and potential crashes, which constitutes incorrect behavior. The proposed solution is to add hooks to clear this cache, effectively fixing a bug rather than introducing new user-facing functionality or refactoring."
+  },
+  {
+   "config": "qwen/qwen3.5-27b@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-34552",
+   "error": null,
+   "gold": "feature",
+   "pred": "bug",
+   "rationale": "The ticket describes an inconsistency where `listPartitions` and `listPartitionsByFilter` fail to restore partition-level stats that `getPartition` correctly handles, resulting in discrepancies in the returned metadata. This behavior contradicts the expected consistency of the API and represents incorrect functionality that needs to be fixed."
+  },
+  {
+   "config": "qwen/qwen3.5-27b@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-31738",
+   "error": null,
+   "gold": "task",
+   "pred": "task",
+   "rationale": "The ticket requests adding descriptions and examples for existing pattern letters, which constitutes documentation work that does not alter user-facing functionality or fix a bug."
+  },
+  {
+   "config": "qwen/qwen3.5-27b@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-6535",
+   "error": null,
+   "gold": "idea",
+   "pred": "idea",
+   "rationale": "The ticket proposes a new RDD method (`mapIO`) to handle asynchronous I/O operations using Futures, which is a request for new functionality to improve how external data is processed. Since the author explicitly asks for feedback on whether this is a good idea and describes a speculative implementation rather than a concrete bug or existing task, it fits the definition of an exploratory proposal."
+  },
+  {
+   "config": "qwen/qwen3.5-27b@reasoning-min",
+   "task": "extraction",
+   "key": "SPARK-46706",
+   "error": null,
+   "output": {
+    "summary": {
+     "value": "percentile_approx regression since Spark 2.4",
+     "status": "confirmed"
+    },
+    "steps_to_reproduce": {
+     "value": "select\n    col1,\n    percentile_approx(col2, 0.95) as q_95,\n    percentile_approx(col2, 0.99) as q_99,\n    percentile_approx(col2, 0.99) - percentile_approx(col2, 0.95) as q_diff\nfrom data\ngroup by 1",
+     "status": "confirmed"
+    },
+    "expected_behavior": {
+     "value": "Shuffle read stage should take roughly 15 minutes (similar to Spark 2.4 performance).",
+     "status": "confirmed"
+    },
+    "actual_behavior": {
+     "value": "Shuffle read stage is drastically slower, taking 5.7 hours on Spark 3.1 (with precision reduced to 100) or exceeding 15 hours (with default precision 10000).",
+     "status": "confirmed"
+    },
+    "environment": {
+     "value": "Spark 2.4 and Spark 3.1; API language: SQL (via Java/Scala context); Deployment: Not explicitly stated (mentions broadcast and shuffle, implying a cluster environment).",
+     "status": "confirmed"
+    }
+   },
+   "grounding": [
+    {
+     "field": "summary",
+     "share": 1.0,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "steps_to_reproduce",
+     "share": 1.0,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "expected_behavior",
+     "share": 1.0,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "actual_behavior",
+     "share": 0.905,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "environment",
+     "share": 0.571,
+     "flagged": true,
+     "reason": "only 57% of its words are in the input"
+    }
+   ]
+  },
+  {
+   "config": "qwen/qwen3.5-27b@reasoning-min",
+   "task": "simulator",
+   "key": "SPARK-46706",
+   "error": null,
+   "transcript": [
+    {
+     "question": "What did you expect to happen, and what happened instead?",
+     "reply": "I expected the shuffle read stage to complete in about 15 minutes, as it did on Spark 2.4, but instead it took 5.7 hours on Spark 3.1 even after reducing the precision to 100. When left at the default precision of 10000, the stage exceeded 15 hours and hit our application time limits. This represents a drastic regression in performance for the `percentile_approx` operation during our upgrade.",
+     "checks": {
+      "no_ai_mention": true,
+      "brief": true,
+      "first_person": true,
+      "no_ticket_dump": true,
+      "no_volunteered_version": false
+     }
+    },
+    {
+     "question": "Which Spark version and which language API (Scala, Python, Java, SQL or R) are you using?",
+     "reply": "I am experiencing this issue while upgrading from Spark 2.4 to Spark 3.1. The problematic query is written in SQL, although the original report included Java code snippets to illustrate the logic.",
+     "checks": {
+      "no_ai_mention": true,
+      "brief": true,
+      "first_person": true,
+      "no_ticket_dump": true
+     }
+    },
+    {
+     "question": "How many nodes does your cluster have, and what exactly is your executor memory setting?",
+     "reply": "I don't have information about the number of nodes in my cluster or the specific executor memory settings in my ticket. I only mentioned the input data size of 37 billion rows and the shuffle read/write sizes, but not the cluster configuration.",
+     "checks": {
+      "no_ai_mention": true,
+      "brief": true,
+      "first_person": true,
+      "no_ticket_dump": true,
+      "admits_unknown": false,
+      "no_invented_number": true
+     }
+    }
+   ]
+  },
+  {
+   "config": "bytedance-seed/seed-2-1-turbo@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-47404",
+   "error": null,
+   "gold": "bug",
+   "pred": "feature",
+   "rationale": "The ticket requests adding new hooks to clear the ANTLR DFA cache after SQL parsing, which is a new capability to address unbounded cache growth. It is a request for improvement of existing behavior, not a bug fix, task, or open-ended idea."
+  },
+  {
+   "config": "bytedance-seed/seed-2-1-turbo@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-34552",
+   "error": null,
+   "gold": "feature",
+   "pred": "bug",
+   "rationale": "The ticket describes that listPartitions and listPartitionsByFilter do not restore partition-level stats while getPartition does, leading to inconsistent CatalogPartition results across API calls, which is incorrect behavior."
+  },
+  {
+   "config": "bytedance-seed/seed-2-1-turbo@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-31738",
+   "error": null,
+   "gold": "task",
+   "pred": "task",
+   "rationale": "The ticket requests improving documentation by describing the difference between 'M' and 'L' month pattern letters and adding examples, which is documentation work that does not change user-facing behaviour."
+  },
+  {
+   "config": "bytedance-seed/seed-2-1-turbo@reasoning-min",
+   "task": "classification",
+   "key": "SPARK-6535",
+   "error": null,
+   "gold": "idea",
+   "pred": "idea",
+   "rationale": "The ticket proposes a new RDD method as an exploratory suggestion, asking for feedback on whether it is a good idea and whether it belongs in Spark Core, rather than presenting a concrete, ready-to-implement feature request."
+  },
+  {
+   "config": "bytedance-seed/seed-2-1-turbo@reasoning-min",
+   "task": "extraction",
+   "key": "SPARK-46706",
+   "error": null,
+   "output": {
+    "summary": {
+     "value": "percentile_approx regression since Spark 2.4",
+     "status": "confirmed"
+    },
+    "steps_to_reproduce": {
+     "value": "Run a query that groups by a column and computes multiple percentile_approx aggregations on a large dataset (37 billion rows, aggregating to ~100 rows), then uses the results in a CaseWhen expression and broadcasts the result in a join:\n\nwith source_data as (\n  select col1, col2\n  from <table>\n), percentiles as (\n  select\n      col1,\n      approx_percentile(col2, 0.95) as q_95,\n      approx_percentile(col2, 0.99) as q_99,\n      approx_percentile(col2, 0.99) - approx_percentile(col2, 0.95) as q_diff\n  from source_data\n  group by 1\n), calculations as (\n  select\n    col1,\n    case\n      when q_diff > 5 then q_95 + 5\n      else q_99\n    end as calculated_val\n  from percentiles\n)\nselect /*+ BROADCAST (c) */ source_data.*, c.calculated_val\nfrom source_data\nleft join calculations as c using(col1)",
+     "status": "confirmed"
+    },
+    "expected_behavior": {
+     "value": "Shuffle read stage performance should be comparable to Spark 2.4 (around 15 minutes for the shuffle read stage with default precision 10000).",
+     "status": "confirmed"
+    },
+    "actual_behavior": {
+     "value": "Shuffle read stage is drastically slower in Spark 3.1: 5.7 hours even with precision reduced from the default 10000 to 100; at default precision the stage exceeds 15 hours and hits application time limits. Shuffle write size and time are roughly the same between versions.",
+     "status": "confirmed"
+    },
+    "environment": {
+     "value": "Spark versions: 2.4, 3.1; API: SQL; deployment not specified.",
+     "status": "confirmed"
+    }
+   },
+   "grounding": [
+    {
+     "field": "summary",
+     "share": 1.0,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "steps_to_reproduce",
+     "share": 0.924,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "expected_behavior",
+     "share": 0.882,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "actual_behavior",
+     "share": 0.857,
+     "flagged": false,
+     "reason": ""
+    },
+    {
+     "field": "environment",
+     "share": 0.6,
+     "flagged": false,
+     "reason": ""
+    }
+   ]
+  },
+  {
+   "config": "bytedance-seed/seed-2-1-turbo@reasoning-min",
+   "task": "simulator",
+   "key": "SPARK-46706",
+   "error": null,
+   "transcript": [
+    {
+     "question": "What did you expect to happen, and what happened instead?",
+     "reply": "I expected the shuffle read stage for my queries using `percentile_approx` to perform similarly after upgrading from Spark 2.4 to Spark 3.1, as the shuffle write size and stage time were roughly equivalent between versions. Instead, the shuffle read stage slowed drastically: it took 15 minutes on Spark 2.4 but 5.7 hours on Spark 3.1 even after reducing `percentile_approx` precision from the default 10000 to 100, and exceeded 15 hours when left at the default precision.",
+     "checks": {
+      "no_ai_mention": true,
+      "brief": true,
+      "first_person": true,
+      "no_ticket_dump": true,
+      "no_volunteered_version": false
+     }
+    },
+    {
+     "question": "Which Spark version and which language API (Scala, Python, Java, SQL or R) are you using?",
+     "reply": "I'm upgrading from Spark 2.4 to Spark 3.1, and I'm using the SQL API for the queries with `percentile_approx`. I also noted I have a Spark 3.3 environment available that I plan to test the job on later.",
+     "checks": {
+      "no_ai_mention": true,
+      "brief": true,
+      "first_person": true,
+      "no_ticket_dump": true
+     }
+    },
+    {
+     "question": "How many nodes does your cluster have, and what exactly is your executor memory setting?",
+     "reply": "I don't have those details available in what I've noted so far, I'm not sure of the exact cluster node count or executor memory setting for these runs. I can dig up that information as part of my follow-up profiling work on the slow stage.",
+     "checks": {
+      "no_ai_mention": true,
+      "brief": true,
+      "first_person": true,
+      "no_ticket_dump": true,
+      "admits_unknown": true,
+      "no_invented_number": true
+     }
+    }
+   ]
+  }
+ ],
+ "projected_full_cost": {
+  "elorian/glimpse@reasoning-min": 0.0543,
+  "qwen/qwen3.5-27b@reasoning-min": 0.0351,
+  "bytedance-seed/seed-2-1-turbo@reasoning-min": 0.087
+ }
+}

@@ -1,0 +1,1571 @@
+{
+ "stage": "test",
+ "final_config": {
+  "approved_at": "2026-11-15",
+  "approved_by": "user",
+  "source": "eval/results/c2_variants_20261115T145643Z.json",
+  "variant": "dense",
+  "embedder": "BAAI/bge-small-en-v1.5",
+  "mask_issue_keys": true,
+  "alert_threshold": {
+   "full": 0.839377,
+   "summary": 0.820585
+  }
+ },
+ "n_duplicate": 35,
+ "n_non_duplicate": 16,
+ "full": {
+  "metrics": {
+   "n": 35,
+   "recall@1": 0.5143,
+   "recall@1_ci95": [
+    0.3429,
+    0.6857
+   ],
+   "recall@5": 0.7429,
+   "recall@5_ci95": [
+    0.6,
+    0.8857
+   ],
+   "recall@10": 0.7714,
+   "recall@10_ci95": [
+    0.6286,
+    0.9143
+   ],
+   "mrr": 0.6037,
+   "mrr_ci95": [
+    0.4535,
+    0.746
+   ],
+   "not_in_top100": 4,
+   "latency_p50_ms": 13.9,
+   "latency_p95_ms": 36.9,
+   "recall_curve": [
+    0.5143,
+    0.5714,
+    0.6571,
+    0.7143,
+    0.7429,
+    0.7714,
+    0.7714,
+    0.7714,
+    0.7714,
+    0.7714,
+    0.7714,
+    0.8,
+    0.8286,
+    0.8286,
+    0.8286,
+    0.8571,
+    0.8571,
+    0.8571,
+    0.8571,
+    0.8571
+   ]
+  },
+  "alert": {
+   "threshold": 0.839377,
+   "n_duplicate": 35,
+   "n_non_duplicate": 16,
+   "alert_recall": 0.5429,
+   "alert_precision": 0.8261,
+   "false_alarm_rate": 0.25,
+   "useful_alert_rate": 0.4571
+  },
+  "records": [
+   {
+    "query_key": "SPARK-30993",
+    "kind": "duplicate",
+    "rank": 3,
+    "alert_score": 0.764716,
+    "top5": [
+     "SPARK-30633",
+     "SPARK-30952",
+     "SPARK-30986",
+     "SPARK-30921",
+     "SPARK-30904"
+    ],
+    "ms": 316.66
+   },
+   {
+    "query_key": "SPARK-31113",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.801539,
+    "top5": [
+     "SPARK-31033",
+     "SPARK-30517",
+     "SPARK-30435",
+     "SPARK-31048",
+     "SPARK-30830"
+    ],
+    "ms": 20.95
+   },
+   {
+    "query_key": "SPARK-32236",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.932679,
+    "top5": [
+     "SPARK-31922",
+     "SPARK-32015",
+     "SPARK-31246",
+     "SPARK-31664",
+     "SPARK-30610"
+    ],
+    "ms": 37.19
+   },
+   {
+    "query_key": "SPARK-32870",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.787446,
+    "top5": [
+     "SPARK-32780",
+     "SPARK-32762",
+     "SPARK-30893",
+     "SPARK-30705",
+     "SPARK-31513"
+    ],
+    "ms": 8.26
+   },
+   {
+    "query_key": "SPARK-33661",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.851774,
+    "top5": [
+     "SPARK-33398",
+     "SPARK-31497",
+     "SPARK-32048",
+     "SPARK-32232",
+     "SPARK-32275"
+    ],
+    "ms": 31.46
+   },
+   {
+    "query_key": "SPARK-34210",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.90263,
+    "top5": [
+     "SPARK-32380",
+     "SPARK-31576",
+     "SPARK-31614",
+     "SPARK-31191",
+     "SPARK-32069"
+    ],
+    "ms": 36.9
+   },
+   {
+    "query_key": "SPARK-34588",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.844633,
+    "top5": [
+     "SPARK-32294",
+     "SPARK-32612",
+     "SPARK-31704",
+     "SPARK-32746",
+     "SPARK-34545"
+    ],
+    "ms": 22.11
+   },
+   {
+    "query_key": "SPARK-34656",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.981838,
+    "top5": [
+     "SPARK-34655",
+     "SPARK-34653",
+     "SPARK-34654",
+     "SPARK-31637",
+     "SPARK-34580"
+    ],
+    "ms": 8.65
+   },
+   {
+    "query_key": "SPARK-34731",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.889186,
+    "top5": [
+     "SPARK-32027",
+     "SPARK-33280",
+     "SPARK-31923",
+     "SPARK-32314",
+     "SPARK-31496"
+    ],
+    "ms": 36.14
+   },
+   {
+    "query_key": "SPARK-35762",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.893836,
+    "top5": [
+     "SPARK-35700",
+     "SPARK-32611",
+     "SPARK-32894",
+     "SPARK-32558",
+     "SPARK-31576"
+    ],
+    "ms": 37.29
+   },
+   {
+    "query_key": "SPARK-36270",
+    "kind": "duplicate",
+    "rank": 13,
+    "alert_score": 0.749795,
+    "top5": [
+     "SPARK-34874",
+     "SPARK-36007",
+     "SPARK-32851",
+     "SPARK-32623",
+     "SPARK-35483"
+    ],
+    "ms": 7.59
+   },
+   {
+    "query_key": "SPARK-36282",
+    "kind": "duplicate",
+    "rank": 12,
+    "alert_score": 0.832534,
+    "top5": [
+     "SPARK-32380",
+     "SPARK-31751",
+     "SPARK-35804",
+     "SPARK-31859",
+     "SPARK-32166"
+    ],
+    "ms": 20.08
+   },
+   {
+    "query_key": "SPARK-36601",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.864418,
+    "top5": [
+     "SPARK-36379",
+     "SPARK-30586",
+     "SPARK-33792",
+     "SPARK-34515",
+     "SPARK-35912"
+    ],
+    "ms": 18.2
+   },
+   {
+    "query_key": "SPARK-37096",
+    "kind": "duplicate",
+    "rank": 2,
+    "alert_score": 0.819509,
+    "top5": [
+     "SPARK-33879",
+     "SPARK-35700",
+     "SPARK-36552",
+     "SPARK-31194",
+     "SPARK-36635"
+    ],
+    "ms": 14.04
+   },
+   {
+    "query_key": "SPARK-37242",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.82327,
+    "top5": [
+     "SPARK-37052",
+     "SPARK-9227",
+     "SPARK-36804",
+     "SPARK-32621",
+     "SPARK-34787"
+    ],
+    "ms": 13.08
+   },
+   {
+    "query_key": "SPARK-37323",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.770712,
+    "top5": [
+     "SPARK-37299",
+     "SPARK-35375",
+     "SPARK-34951",
+     "SPARK-34300",
+     "SPARK-36209"
+    ],
+    "ms": 23.85
+   },
+   {
+    "query_key": "SPARK-37560",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.865802,
+    "top5": [
+     "SPARK-30790",
+     "SPARK-36203",
+     "SPARK-32693",
+     "SPARK-36452",
+     "SPARK-33879"
+    ],
+    "ms": 16.58
+   },
+   {
+    "query_key": "SPARK-37600",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.792997,
+    "top5": [
+     "SPARK-11416",
+     "SPARK-32230",
+     "SPARK-33772",
+     "SPARK-31341",
+     "SPARK-37342"
+    ],
+    "ms": 7.58
+   },
+   {
+    "query_key": "SPARK-39415",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.877508,
+    "top5": [
+     "SPARK-34914",
+     "SPARK-36322",
+     "SPARK-33485",
+     "SPARK-35160",
+     "SPARK-31800"
+    ],
+    "ms": 16.45
+   },
+   {
+    "query_key": "SPARK-40457",
+    "kind": "duplicate",
+    "rank": 4,
+    "alert_score": 0.856168,
+    "top5": [
+     "SPARK-38665",
+     "SPARK-34124",
+     "SPARK-40326",
+     "SPARK-30466",
+     "SPARK-33695"
+    ],
+    "ms": 7.55
+   },
+   {
+    "query_key": "SPARK-40835",
+    "kind": "duplicate",
+    "rank": 25,
+    "alert_score": 0.881809,
+    "top5": [
+     "SPARK-33863",
+     "SPARK-32547",
+     "SPARK-40630",
+     "SPARK-39623",
+     "SPARK-35826"
+    ],
+    "ms": 35.22
+   },
+   {
+    "query_key": "SPARK-41073",
+    "kind": "duplicate",
+    "rank": 5,
+    "alert_score": 0.863992,
+    "top5": [
+     "SPARK-37329",
+     "SPARK-35160",
+     "SPARK-37787",
+     "SPARK-35747",
+     "SPARK-36328"
+    ],
+    "ms": 13.91
+   },
+   {
+    "query_key": "SPARK-41718",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.863062,
+    "top5": [
+     "SPARK-40376",
+     "SPARK-37039",
+     "SPARK-30672",
+     "SPARK-37972",
+     "SPARK-36077"
+    ],
+    "ms": 11.58
+   },
+   {
+    "query_key": "SPARK-42200",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.824856,
+    "top5": [
+     "SPARK-42046",
+     "SPARK-41822",
+     "SPARK-36270",
+     "SPARK-41534",
+     "SPARK-38567"
+    ],
+    "ms": 6.3
+   },
+   {
+    "query_key": "SPARK-42910",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.810061,
+    "top5": [
+     "SPARK-38285",
+     "SPARK-38912",
+     "SPARK-37577",
+     "SPARK-36220",
+     "SPARK-32514"
+    ],
+    "ms": 35.68
+   },
+   {
+    "query_key": "SPARK-43781",
+    "kind": "duplicate",
+    "rank": 3,
+    "alert_score": 0.823592,
+    "top5": [
+     "SPARK-37855",
+     "SPARK-40706",
+     "SPARK-42132",
+     "SPARK-36932",
+     "SPARK-31299"
+    ],
+    "ms": 35.53
+   },
+   {
+    "query_key": "SPARK-44470",
+    "kind": "duplicate",
+    "rank": 6,
+    "alert_score": 0.805434,
+    "top5": [
+     "SPARK-38572",
+     "SPARK-33662",
+     "SPARK-35996",
+     "SPARK-30950",
+     "SPARK-32089"
+    ],
+    "ms": 7.52
+   },
+   {
+    "query_key": "SPARK-45071",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.827469,
+    "top5": [
+     "SPARK-44912",
+     "SPARK-32914",
+     "SPARK-32690",
+     "SPARK-37290",
+     "SPARK-39248"
+    ],
+    "ms": 28.4
+   },
+   {
+    "query_key": "SPARK-45745",
+    "kind": "duplicate",
+    "rank": 3,
+    "alert_score": 0.930554,
+    "top5": [
+     "SPARK-44912",
+     "SPARK-35066",
+     "SPARK-45071",
+     "SPARK-44947",
+     "SPARK-32130"
+    ],
+    "ms": 25.78
+   },
+   {
+    "query_key": "SPARK-46330",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.995209,
+    "top5": [
+     "SPARK-46329",
+     "SPARK-31608",
+     "SPARK-32118",
+     "SPARK-30488",
+     "SPARK-34107"
+    ],
+    "ms": 36.54
+   },
+   {
+    "query_key": "SPARK-46814",
+    "kind": "duplicate",
+    "rank": 2,
+    "alert_score": 0.970217,
+    "top5": [
+     "SPARK-33772",
+     "SPARK-43831",
+     "SPARK-43538",
+     "SPARK-39151",
+     "SPARK-33312"
+    ],
+    "ms": 12.71
+   },
+   {
+    "query_key": "SPARK-47556",
+    "kind": "duplicate",
+    "rank": 16,
+    "alert_score": 0.837309,
+    "top5": [
+     "SPARK-41060",
+     "SPARK-34453",
+     "SPARK-35006",
+     "SPARK-37999",
+     "SPARK-36577"
+    ],
+    "ms": 35.6
+   },
+   {
+    "query_key": "SPARK-48370",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.82916,
+    "top5": [
+     "SPARK-47190",
+     "SPARK-48258",
+     "SPARK-44275",
+     "SPARK-33017",
+     "SPARK-43129"
+    ],
+    "ms": 7.38
+   },
+   {
+    "query_key": "SPARK-51892",
+    "kind": "duplicate",
+    "rank": 4,
+    "alert_score": 0.899863,
+    "top5": [
+     "SPARK-47704",
+     "SPARK-37577",
+     "SPARK-38285",
+     "SPARK-48863",
+     "SPARK-32176"
+    ],
+    "ms": 35.67
+   },
+   {
+    "query_key": "SPARK-53145",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.890035,
+    "top5": [
+     "SPARK-49472",
+     "SPARK-52090",
+     "SPARK-46182",
+     "SPARK-36575",
+     "SPARK-34949"
+    ],
+    "ms": 35.69
+   },
+   {
+    "query_key": "SPARK-32898",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.806525,
+    "top5": [
+     "SPARK-30404",
+     "SPARK-30511",
+     "SPARK-31418",
+     "SPARK-31635",
+     "SPARK-30585"
+    ],
+    "ms": 18.99
+   },
+   {
+    "query_key": "SPARK-33274",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.774728,
+    "top5": [
+     "SPARK-32044",
+     "SPARK-32151",
+     "SPARK-33058",
+     "SPARK-30692",
+     "SPARK-31040"
+    ],
+    "ms": 11.51
+   },
+   {
+    "query_key": "SPARK-33421",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.6982,
+    "top5": [
+     "SPARK-32927",
+     "SPARK-30656",
+     "SPARK-31515",
+     "SPARK-33337",
+     "SPARK-32302"
+    ],
+    "ms": 6.33
+   },
+   {
+    "query_key": "SPARK-33852",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.784223,
+    "top5": [
+     "SPARK-30868",
+     "SPARK-33752",
+     "SPARK-30956",
+     "SPARK-31467",
+     "SPARK-32131"
+    ],
+    "ms": 9.74
+   },
+   {
+    "query_key": "SPARK-34526",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.76277,
+    "top5": [
+     "SPARK-32810",
+     "SPARK-30915",
+     "SPARK-32815",
+     "SPARK-4402",
+     "SPARK-32128"
+    ],
+    "ms": 8.97
+   },
+   {
+    "query_key": "SPARK-34945",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.746914,
+    "top5": [
+     "SPARK-30778",
+     "SPARK-32771",
+     "SPARK-17770",
+     "SPARK-31480",
+     "SPARK-33860"
+    ],
+    "ms": 6.97
+   },
+   {
+    "query_key": "SPARK-35180",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.764561,
+    "top5": [
+     "SPARK-34915",
+     "SPARK-30534",
+     "SPARK-31120",
+     "SPARK-34590",
+     "SPARK-33343"
+    ],
+    "ms": 7.56
+   },
+   {
+    "query_key": "SPARK-37905",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.723929,
+    "top5": [
+     "SPARK-37016",
+     "SPARK-34553",
+     "SPARK-35451",
+     "SPARK-36051",
+     "SPARK-31072"
+    ],
+    "ms": 6.17
+   },
+   {
+    "query_key": "SPARK-40283",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.766388,
+    "top5": [
+     "SPARK-39945",
+     "SPARK-34103",
+     "SPARK-35996",
+     "SPARK-33662",
+     "SPARK-38572"
+    ],
+    "ms": 5.63
+   },
+   {
+    "query_key": "SPARK-40843",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.897223,
+    "top5": [
+     "SPARK-34284",
+     "SPARK-36456",
+     "SPARK-38342",
+     "SPARK-39803",
+     "SPARK-38620"
+    ],
+    "ms": 35.46
+   },
+   {
+    "query_key": "SPARK-43325",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.868649,
+    "top5": [
+     "SPARK-34244",
+     "SPARK-34214",
+     "SPARK-39796",
+     "SPARK-39758",
+     "SPARK-30763"
+    ],
+    "ms": 7.52
+   },
+   {
+    "query_key": "SPARK-44612",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.886762,
+    "top5": [
+     "SPARK-44591",
+     "SPARK-31105",
+     "SPARK-44202",
+     "SPARK-40475",
+     "SPARK-44195"
+    ],
+    "ms": 13.13
+   },
+   {
+    "query_key": "SPARK-45360",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.848228,
+    "top5": [
+     "SPARK-44750",
+     "SPARK-44740",
+     "SPARK-39194",
+     "SPARK-44400",
+     "SPARK-31532"
+    ],
+    "ms": 6.19
+   },
+   {
+    "query_key": "SPARK-50608",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.698574,
+    "top5": [
+     "SPARK-32525",
+     "SPARK-43751",
+     "SPARK-44960",
+     "SPARK-35966",
+     "SPARK-46944"
+    ],
+    "ms": 5.97
+   },
+   {
+    "query_key": "SPARK-53458",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.770956,
+    "top5": [
+     "SPARK-51018",
+     "SPARK-47460",
+     "SPARK-44468",
+     "SPARK-42185",
+     "SPARK-44129"
+    ],
+    "ms": 5.92
+   },
+   {
+    "query_key": "SPARK-53584",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.761553,
+    "top5": [
+     "SPARK-49894",
+     "SPARK-49949",
+     "SPARK-46023",
+     "SPARK-47638",
+     "SPARK-47560"
+    ],
+    "ms": 5.87
+   }
+  ]
+ },
+ "summary": {
+  "metrics": {
+   "n": 35,
+   "recall@1": 0.3714,
+   "recall@1_ci95": [
+    0.2,
+    0.5429
+   ],
+   "recall@5": 0.5429,
+   "recall@5_ci95": [
+    0.3714,
+    0.7143
+   ],
+   "recall@10": 0.6571,
+   "recall@10_ci95": [
+    0.4857,
+    0.8
+   ],
+   "mrr": 0.4691,
+   "mrr_ci95": [
+    0.3151,
+    0.6218
+   ],
+   "not_in_top100": 6,
+   "latency_p50_ms": 5.9,
+   "latency_p95_ms": 6.7,
+   "recall_curve": [
+    0.3714,
+    0.4857,
+    0.5429,
+    0.5429,
+    0.5429,
+    0.5429,
+    0.6,
+    0.6286,
+    0.6286,
+    0.6571,
+    0.6571,
+    0.6571,
+    0.6571,
+    0.6571,
+    0.6857,
+    0.6857,
+    0.6857,
+    0.7143,
+    0.7143,
+    0.7143
+   ]
+  },
+  "alert": {
+   "threshold": 0.820585,
+   "n_duplicate": 35,
+   "n_non_duplicate": 16,
+   "alert_recall": 0.3143,
+   "alert_precision": 0.7857,
+   "false_alarm_rate": 0.1875,
+   "useful_alert_rate": 0.3143
+  },
+  "records": [
+   {
+    "query_key": "SPARK-30993",
+    "kind": "duplicate",
+    "rank": 72,
+    "alert_score": 0.726909,
+    "top5": [
+     "SPARK-30952",
+     "SPARK-30921",
+     "SPARK-30633",
+     "SPARK-30473",
+     "SPARK-30811"
+    ],
+    "ms": 6.47
+   },
+   {
+    "query_key": "SPARK-31113",
+    "kind": "duplicate",
+    "rank": 2,
+    "alert_score": 0.696359,
+    "top5": [
+     "SPARK-30517",
+     "SPARK-31033",
+     "SPARK-30613",
+     "SPARK-1742",
+     "SPARK-26123"
+    ],
+    "ms": 5.65
+   },
+   {
+    "query_key": "SPARK-32236",
+    "kind": "duplicate",
+    "rank": 7,
+    "alert_score": 0.735425,
+    "top5": [
+     "SPARK-30610",
+     "SPARK-31246",
+     "SPARK-30873",
+     "SPARK-32034",
+     "SPARK-30978"
+    ],
+    "ms": 5.49
+   },
+   {
+    "query_key": "SPARK-32870",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.7694,
+    "top5": [
+     "SPARK-32780",
+     "SPARK-31429",
+     "SPARK-32729",
+     "SPARK-32762",
+     "SPARK-31906"
+    ],
+    "ms": 5.99
+   },
+   {
+    "query_key": "SPARK-33661",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.787936,
+    "top5": [
+     "SPARK-33398",
+     "SPARK-31497",
+     "SPARK-32232",
+     "SPARK-30965",
+     "SPARK-30723"
+    ],
+    "ms": 5.85
+   },
+   {
+    "query_key": "SPARK-34210",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.896134,
+    "top5": [
+     "SPARK-32380",
+     "SPARK-31576",
+     "SPARK-31614",
+     "SPARK-32166",
+     "SPARK-31191"
+    ],
+    "ms": 6.1
+   },
+   {
+    "query_key": "SPARK-34588",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.805845,
+    "top5": [
+     "SPARK-32612",
+     "SPARK-31704",
+     "SPARK-32294",
+     "SPARK-34430",
+     "SPARK-31386"
+    ],
+    "ms": 6.09
+   },
+   {
+    "query_key": "SPARK-34656",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.897666,
+    "top5": [
+     "SPARK-34655",
+     "SPARK-34653",
+     "SPARK-34654",
+     "SPARK-31637",
+     "SPARK-31081"
+    ],
+    "ms": 6.06
+   },
+   {
+    "query_key": "SPARK-34731",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.857751,
+    "top5": [
+     "SPARK-32027",
+     "SPARK-32881",
+     "SPARK-31584",
+     "SPARK-34000",
+     "SPARK-31068"
+    ],
+    "ms": 6.04
+   },
+   {
+    "query_key": "SPARK-35762",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.840593,
+    "top5": [
+     "SPARK-35700",
+     "SPARK-32558",
+     "SPARK-31576",
+     "SPARK-32152",
+     "SPARK-35010"
+    ],
+    "ms": 5.76
+   },
+   {
+    "query_key": "SPARK-36270",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.664684,
+    "top5": [
+     "SPARK-31602",
+     "SPARK-30975",
+     "SPARK-34874",
+     "SPARK-34089",
+     "SPARK-32293"
+    ],
+    "ms": 5.67
+   },
+   {
+    "query_key": "SPARK-36282",
+    "kind": "duplicate",
+    "rank": 28,
+    "alert_score": 0.807772,
+    "top5": [
+     "SPARK-32380",
+     "SPARK-35804",
+     "SPARK-35875",
+     "SPARK-32852",
+     "SPARK-32166"
+    ],
+    "ms": 6.05
+   },
+   {
+    "query_key": "SPARK-36601",
+    "kind": "duplicate",
+    "rank": 22,
+    "alert_score": 0.777885,
+    "top5": [
+     "SPARK-36477",
+     "SPARK-34473",
+     "SPARK-32081",
+     "SPARK-31261",
+     "SPARK-31139"
+    ],
+    "ms": 5.97
+   },
+   {
+    "query_key": "SPARK-37096",
+    "kind": "duplicate",
+    "rank": 7,
+    "alert_score": 0.752903,
+    "top5": [
+     "SPARK-33480",
+     "SPARK-34082",
+     "SPARK-33879",
+     "SPARK-37051",
+     "SPARK-33892"
+    ],
+    "ms": 5.91
+   },
+   {
+    "query_key": "SPARK-37242",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.670565,
+    "top5": [
+     "SPARK-31462",
+     "SPARK-34570",
+     "SPARK-35685",
+     "SPARK-30612",
+     "SPARK-32840"
+    ],
+    "ms": 5.86
+   },
+   {
+    "query_key": "SPARK-37323",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.760693,
+    "top5": [
+     "SPARK-34442",
+     "SPARK-37170",
+     "SPARK-30879",
+     "SPARK-35682",
+     "SPARK-35721"
+    ],
+    "ms": 5.79
+   },
+   {
+    "query_key": "SPARK-37560",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.756874,
+    "top5": [
+     "SPARK-34819",
+     "SPARK-32090",
+     "SPARK-32693",
+     "SPARK-34829",
+     "SPARK-30790"
+    ],
+    "ms": 5.85
+   },
+   {
+    "query_key": "SPARK-37600",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.818215,
+    "top5": [
+     "SPARK-31858",
+     "SPARK-33750",
+     "SPARK-37445",
+     "SPARK-32058",
+     "SPARK-33047"
+    ],
+    "ms": 5.97
+   },
+   {
+    "query_key": "SPARK-39415",
+    "kind": "duplicate",
+    "rank": 2,
+    "alert_score": 0.785014,
+    "top5": [
+     "SPARK-34090",
+     "SPARK-34914",
+     "SPARK-31742",
+     "SPARK-37787",
+     "SPARK-35160"
+    ],
+    "ms": 5.88
+   },
+   {
+    "query_key": "SPARK-40457",
+    "kind": "duplicate",
+    "rank": 15,
+    "alert_score": 0.810098,
+    "top5": [
+     "SPARK-36605",
+     "SPARK-39250",
+     "SPARK-37241",
+     "SPARK-38499",
+     "SPARK-37763"
+    ],
+    "ms": 5.73
+   },
+   {
+    "query_key": "SPARK-40835",
+    "kind": "duplicate",
+    "rank": 18,
+    "alert_score": 0.802229,
+    "top5": [
+     "SPARK-30668",
+     "SPARK-31174",
+     "SPARK-35249",
+     "SPARK-40630",
+     "SPARK-38990"
+    ],
+    "ms": 6.3
+   },
+   {
+    "query_key": "SPARK-41073",
+    "kind": "duplicate",
+    "rank": 10,
+    "alert_score": 0.811906,
+    "top5": [
+     "SPARK-37329",
+     "SPARK-35747",
+     "SPARK-37787",
+     "SPARK-40612",
+     "SPARK-35160"
+    ],
+    "ms": 6.02
+   },
+   {
+    "query_key": "SPARK-41718",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.844442,
+    "top5": [
+     "SPARK-40376",
+     "SPARK-30672",
+     "SPARK-37972",
+     "SPARK-37039",
+     "SPARK-36268"
+    ],
+    "ms": 7.3
+   },
+   {
+    "query_key": "SPARK-42200",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.824856,
+    "top5": [
+     "SPARK-42046",
+     "SPARK-41822",
+     "SPARK-36270",
+     "SPARK-41534",
+     "SPARK-38567"
+    ],
+    "ms": 5.93
+   },
+   {
+    "query_key": "SPARK-42910",
+    "kind": "duplicate",
+    "rank": null,
+    "alert_score": 0.703002,
+    "top5": [
+     "SPARK-39140",
+     "SPARK-38681",
+     "SPARK-39111",
+     "SPARK-30765",
+     "SPARK-34583"
+    ],
+    "ms": 5.93
+   },
+   {
+    "query_key": "SPARK-43781",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.78593,
+    "top5": [
+     "SPARK-42132",
+     "SPARK-40601",
+     "SPARK-43136",
+     "SPARK-31299",
+     "SPARK-38977"
+    ],
+    "ms": 6.03
+   },
+   {
+    "query_key": "SPARK-44470",
+    "kind": "duplicate",
+    "rank": 2,
+    "alert_score": 0.921435,
+    "top5": [
+     "SPARK-38572",
+     "SPARK-44467",
+     "SPARK-35996",
+     "SPARK-33662",
+     "SPARK-30950"
+    ],
+    "ms": 5.85
+   },
+   {
+    "query_key": "SPARK-45071",
+    "kind": "duplicate",
+    "rank": 41,
+    "alert_score": 0.736444,
+    "top5": [
+     "SPARK-32690",
+     "SPARK-36087",
+     "SPARK-34944",
+     "SPARK-39455",
+     "SPARK-37099"
+    ],
+    "ms": 6.69
+   },
+   {
+    "query_key": "SPARK-45745",
+    "kind": "duplicate",
+    "rank": 3,
+    "alert_score": 0.88702,
+    "top5": [
+     "SPARK-44912",
+     "SPARK-35066",
+     "SPARK-45071",
+     "SPARK-31917",
+     "SPARK-44156"
+    ],
+    "ms": 5.92
+   },
+   {
+    "query_key": "SPARK-46330",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.894308,
+    "top5": [
+     "SPARK-46329",
+     "SPARK-31608",
+     "SPARK-31967",
+     "SPARK-36238",
+     "SPARK-33783"
+    ],
+    "ms": 5.71
+   },
+   {
+    "query_key": "SPARK-46814",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.744488,
+    "top5": [
+     "SPARK-43831",
+     "SPARK-45307",
+     "SPARK-40331",
+     "SPARK-46479",
+     "SPARK-45622"
+    ],
+    "ms": 6.06
+   },
+   {
+    "query_key": "SPARK-47556",
+    "kind": "duplicate",
+    "rank": 8,
+    "alert_score": 0.77327,
+    "top5": [
+     "SPARK-38770",
+     "SPARK-38969",
+     "SPARK-35308",
+     "SPARK-47382",
+     "SPARK-38662"
+    ],
+    "ms": 5.87
+   },
+   {
+    "query_key": "SPARK-48370",
+    "kind": "duplicate",
+    "rank": 1,
+    "alert_score": 0.833431,
+    "top5": [
+     "SPARK-47190",
+     "SPARK-48258",
+     "SPARK-33017",
+     "SPARK-44275",
+     "SPARK-43129"
+    ],
+    "ms": 5.8
+   },
+   {
+    "query_key": "SPARK-51892",
+    "kind": "duplicate",
+    "rank": 2,
+    "alert_score": 0.855092,
+    "top5": [
+     "SPARK-47704",
+     "SPARK-48863",
+     "SPARK-42622",
+     "SPARK-33270",
+     "SPARK-44079"
+    ],
+    "ms": 6.97
+   },
+   {
+    "query_key": "SPARK-53145",
+    "kind": "duplicate",
+    "rank": 3,
+    "alert_score": 0.764995,
+    "top5": [
+     "SPARK-52752",
+     "SPARK-34361",
+     "SPARK-49472",
+     "SPARK-41469",
+     "SPARK-43397"
+    ],
+    "ms": 5.86
+   },
+   {
+    "query_key": "SPARK-32898",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.690766,
+    "top5": [
+     "SPARK-32518",
+     "SPARK-32294",
+     "SPARK-32628",
+     "SPARK-32484",
+     "SPARK-30458"
+    ],
+    "ms": 5.76
+   },
+   {
+    "query_key": "SPARK-33274",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.740089,
+    "top5": [
+     "SPARK-32151",
+     "SPARK-30942",
+     "SPARK-32044",
+     "SPARK-31040",
+     "SPARK-32468"
+    ],
+    "ms": 5.94
+   },
+   {
+    "query_key": "SPARK-33421",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.717893,
+    "top5": [
+     "SPARK-32927",
+     "SPARK-31515",
+     "SPARK-30656",
+     "SPARK-33307",
+     "SPARK-32776"
+    ],
+    "ms": 5.8
+   },
+   {
+    "query_key": "SPARK-33852",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.779272,
+    "top5": [
+     "SPARK-31554",
+     "SPARK-30868",
+     "SPARK-32546",
+     "SPARK-31467",
+     "SPARK-31831"
+    ],
+    "ms": 5.79
+   },
+   {
+    "query_key": "SPARK-34526",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.749797,
+    "top5": [
+     "SPARK-32810",
+     "SPARK-30946",
+     "SPARK-32815",
+     "SPARK-30915",
+     "SPARK-30647"
+    ],
+    "ms": 5.85
+   },
+   {
+    "query_key": "SPARK-34945",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.704779,
+    "top5": [
+     "SPARK-33860",
+     "SPARK-30778",
+     "SPARK-32771",
+     "SPARK-34182",
+     "SPARK-31258"
+    ],
+    "ms": 5.72
+   },
+   {
+    "query_key": "SPARK-35180",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.764794,
+    "top5": [
+     "SPARK-33343",
+     "SPARK-33080",
+     "SPARK-31713",
+     "SPARK-30534",
+     "SPARK-33365"
+    ],
+    "ms": 5.76
+   },
+   {
+    "query_key": "SPARK-37905",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.723929,
+    "top5": [
+     "SPARK-37016",
+     "SPARK-34553",
+     "SPARK-35451",
+     "SPARK-36051",
+     "SPARK-31072"
+    ],
+    "ms": 6.23
+   },
+   {
+    "query_key": "SPARK-40283",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.766388,
+    "top5": [
+     "SPARK-39945",
+     "SPARK-34103",
+     "SPARK-35996",
+     "SPARK-33662",
+     "SPARK-38572"
+    ],
+    "ms": 6.14
+   },
+   {
+    "query_key": "SPARK-40843",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.816087,
+    "top5": [
+     "SPARK-38342",
+     "SPARK-36456",
+     "SPARK-34284",
+     "SPARK-40401",
+     "SPARK-34571"
+    ],
+    "ms": 5.94
+   },
+   {
+    "query_key": "SPARK-43325",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.84619,
+    "top5": [
+     "SPARK-34214",
+     "SPARK-39796",
+     "SPARK-34244",
+     "SPARK-42751",
+     "SPARK-39758"
+    ],
+    "ms": 5.84
+   },
+   {
+    "query_key": "SPARK-44612",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.873271,
+    "top5": [
+     "SPARK-44591",
+     "SPARK-36658",
+     "SPARK-31105",
+     "SPARK-34580",
+     "SPARK-44202"
+    ],
+    "ms": 6.83
+   },
+   {
+    "query_key": "SPARK-45360",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.848228,
+    "top5": [
+     "SPARK-44750",
+     "SPARK-44740",
+     "SPARK-39194",
+     "SPARK-44400",
+     "SPARK-31532"
+    ],
+    "ms": 6.19
+   },
+   {
+    "query_key": "SPARK-50608",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.698574,
+    "top5": [
+     "SPARK-32525",
+     "SPARK-43751",
+     "SPARK-44960",
+     "SPARK-35966",
+     "SPARK-46944"
+    ],
+    "ms": 5.86
+   },
+   {
+    "query_key": "SPARK-53458",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.770956,
+    "top5": [
+     "SPARK-51018",
+     "SPARK-47460",
+     "SPARK-44468",
+     "SPARK-42185",
+     "SPARK-44129"
+    ],
+    "ms": 5.98
+   },
+   {
+    "query_key": "SPARK-53584",
+    "kind": "non_duplicate",
+    "rank": null,
+    "alert_score": 0.761553,
+    "top5": [
+     "SPARK-49894",
+     "SPARK-49949",
+     "SPARK-46023",
+     "SPARK-47638",
+     "SPARK-47560"
+    ],
+    "ms": 5.95
+   }
+  ]
+ },
+ "false_alarm_all_100": {
+  "full": 0.2,
+  "summary": 0.18
+ }
+}

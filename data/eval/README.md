@@ -44,3 +44,9 @@ All text fields are Markdown (`description_md`) and already masked (`<EMAIL>`, `
   version/env; stored in `bug_signals`), other classes = at least 80 words. At most 15 per class.
   Per class (selected / eligible): bug 15/135, feature 15/227, task 15/24, idea 15/15.
 - Candidates only; the final selection is made later with an LLM.
+
+## scope_labeled.jsonl (manual, 2026-11-15)
+- **What:** 80 / 80 scope candidates labelled by the user with `src/data/label_cli.py`, judged against the Spark 4.3.0 docs. 31 labels cite supporting doc chunks.
+- **Labels:** already_supported 42, needs_development 28, out_of_scope 8, insufficient_info 2. Majority-class accuracy is **0.525**, the C3 reference point.
+- **Agreement with the Jira resolution hint:** 0.19 (mapping in `label_cli.py`, `HINT_TO_LABEL`). It is low by design: the resolution describes the ticket *when it was filed*, the label describes Spark *today*. For example, 16 of 25 *Fixed* requests are `already_supported` now.
+- **Summary:** `eval/results/scope_labels_summary_20261115.json` (`python src/data/label_cli.py --summary`).

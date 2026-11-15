@@ -21,3 +21,9 @@ python-dotenv>=1.0
 
 # Lint / format
 ruff>=0.6
+
+# C1 baseline (TF-IDF + LogisticRegression)
+scikit-learn>=1.5
+
+# C2 duplicate finder: local embedders (CPU)
+sentence-transformers>=3.0

@@ -16,3 +16,4 @@ data/processed/doc_chunks.jsonl
 .env
 logs/
 .cache/
+data/processed/embeddings/

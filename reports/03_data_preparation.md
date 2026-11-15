@@ -174,6 +174,8 @@ Duplicate queries by split: train 89, val 24, test 35. By class: bug 87, feature
 
 ## Doc chunks
 
+- **CRISP-DM iteration (2026-11-15).** The generated reference tables were missing from the corpus. `sql-ref-functions-builtin.md` and `configuration.md` include them with `{% include_api_gen %}` at site-build time, and this step stripped Liquid tags, so the SQL built-in functions and the runtime/static SQL configs were lost. Found during C3 modelling, where requests such as "json_array_length" could not be confirmed from the docs. Fix: `src/data/fetch_doc_tables.py` stores the rendered pages (`data/raw/docs_generated/`), and `chunk_docs.py` adds their tables on `<page>__generated` pages. All existing chunk ids and texts are unchanged.
+- **CRISP-DM iteration 2 (2026-11-15).** As 111 list chunks of ~40 entries, the reference was still not retrieved for single-function requests (one entry is diluted in its list). It is now chunked one entry per chunk (`entry_chunks`, prefix `title > heading`): 898 chunks. They are short by design and account for most chunks under 300 tokens below.
 - **Input:** Spark 4.3.0 docs, 245 pages; skipped 404, README; 243 pages chunked.
 - **Cleaning:** front matter stripped (title kept); Liquid tags and `include_example` lines removed; `{% highlight %}` blocks turned into ``` fences.
 - **Splitting:** on headers of any level, outside code. Each chunk is prefixed with `title > header path`.
@@ -181,7 +183,7 @@ Duplicate queries by split: train 89, val 24, test 35. By class: bug 87, feature
 
 | Chunks | Tokens total | min | p10 | median | p90 | max | < 300 | 300–500 | > 500 |
 |---:|---:|---:|---:|---:|---:|---:|---|---|---|
-| 2,034 | 763,422 | 10 | 202 | 409 | 490 | 500 | 23.1% | 76.9% | 0.0% |
+| 2,932 | 821,359 | 10 | 40 | 319 | 487 | 500 | 46.5% | 53.5% | 0.0% |
 
 Chunks under 300 tokens are short pages, or short sections followed by a section too large to merge with.
 Small trailing chunks are first merged into the previous chunk of the same page when that stays within 500.

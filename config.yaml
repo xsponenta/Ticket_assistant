@@ -8,15 +8,22 @@ llm:
   log_path: logs/llm_calls.jsonl                # one line per call (incl. cache hits and failures)
   models_cache: .cache/openrouter_models.json   # model capabilities from OpenRouter /models, refreshed after 24 h
 
-# OpenRouter model ids per role. Placeholders: pick them from `python scripts/list_models.py`.
+# OpenRouter model ids per role, chosen from the val bake-off (reports/model_selection.md, decision L2).
 models:
-  generator: CHOOSE_ME     # components C1, C3–C6
-  judge: CHOOSE_ME         # LLM-as-judge; must differ from the generator (AGENTS.md)
-  simulator: CHOOSE_ME     # simulated user in dialogue evals
-  embedder: CHOOSE_ME      # local embedding model for C2 (duplicate finder); NOT called through src/llm.py
+  generator: deepseek/deepseek-v4.1-flash-1017   # components C1, C3–C6
+  judge: google/gemini-3.5-flash-lite            # LLM-as-judge; different provider than the generator (AGENTS.md)
+  simulator: qwen/qwen3.5-27b                    # simulated user in dialogue evals; different family than the generator
+  embedder: BAAI/bge-small-en-v1.5               # local sentence-transformers model (CPU) for C2/C3 retrieval; NOT called through src/llm.py (L3)
 
 # Default temperature per role, used when complete(..., temperature=None). The judge is always run at 0.
 temperature:
   generator: 0.0
   judge: 0.0
   simulator: 0.7
+
+# Default OpenRouter reasoning setting per role, used when complete(..., reasoning=None) without a model override.
+# Always explicit: OpenRouter's metadata is unreliable (models listed as reasoning-off reasoned heavily in the bake-off).
+reasoning:
+  generator: {effort: none}      # off: same quality, ~2x cheaper and faster than the served default (high)
+  judge: {effort: minimal}       # reasoning is mandatory for this model; minimal is its lowest effort
+  simulator: {enabled: false}    # off: 100% in character, 5/5 honest in the bake-off

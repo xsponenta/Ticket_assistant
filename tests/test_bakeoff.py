@@ -70,13 +70,22 @@ def test_simulator_checks():
     good = mb.check_reply(3, "I'm not sure, I don't have the cluster details at hand.", ticket)
     assert all(good.values())
     invented = mb.check_reply(3, "We run 12 nodes with 8g executors.", ticket)
-    assert not invented["no_invented_number"] and not invented["admits_unknown"]
+    assert not invented["no_invented_number"] and not invented["honest_about_unknown"]
     ai = mb.check_reply(1, "As an AI language model I cannot run Spark.", ticket)
     assert not ai["no_ai_mention"]
     dump = mb.check_reply(1, ticket, ticket)
     assert not dump["no_ticket_dump"] and not dump["brief"]
-    volunteered = mb.check_reply(1, "I expected the same result as on Spark 2.4.8 but got a slow job.", ticket)
-    assert not volunteered["no_volunteered_version"]
+    # v2: a Spark version is part of a regression's expected behaviour; other environment details are volunteered
+    regression = mb.check_reply(1, "I expected the same speed as on Spark 2.4.8 but got a slow job.", ticket)
+    assert regression["no_volunteered_env"]
+    volunteered = mb.check_reply(1, "I expected a result, but on YARN with Python 3.10 it failed.", ticket)
+    assert not volunteered["no_volunteered_env"]
+    # v2: honest phrasings and ticket-grounded answers
+    assert mb.check_reply(3, "I don't have those details, I only tested it.", ticket)["honest_about_unknown"]
+    local_ticket = ticket + " I ran it locally in spark-shell."
+    grounded = mb.check_reply(3, "I ran it locally in spark-shell, so there is no real cluster.", local_ticket)
+    assert grounded["honest_about_unknown"] and grounded["no_invented_number"]
+    assert not mb.check_reply(3, "I ran it locally, so no cluster.", ticket)["honest_about_unknown"]  # not in ticket
 
 
 def test_metrics_use_first_uncached_call_per_session():
