@@ -1,0 +1,12 @@
+{
+  "approved_at": "2026-11-15",
+  "approved_by": "user",
+  "source": "eval/results/c3_verdict_20261115T154133Z.json",
+  "variant": "dense",
+  "embedder": "BAAI/bge-small-en-v1.5",
+  "k": 8,
+  "prompt_version": "c3_scope/v1",
+  "corpus_chunks": 2932,
+  "corpus_sha256": "16f4452d3d17bc2c",
+  "judge_status": "uncalibrated (citation κ −0.04); judge's strict reading adopted as the definition"
+}

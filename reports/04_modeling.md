@@ -303,3 +303,481 @@ Candidates the user **dismissed** in the first pass are removed from the second 
 **Why a false-alarm rate of 0.20–0.25 is acceptable:**
 - **The alert is non-blocking:** the user sees the candidates and can dismiss them with one click.
 - **The two errors cost very different amounts:** a false alarm costs one click, while a missed duplicate costs a new Jira ticket that a committer has to triage and close as Duplicate.
+
+## C3 · Scope checker
+
+**Purpose:** before a feature, task or idea ticket is filed, tell the user whether Spark already does it, citing the Spark 4.3.0 docs (goal 3: route requests that need no ticket). **Docs-grounded by design:** the assistant must never claim `already_supported` without a citation, and it never answers from model knowledge (decisions.md, C3 label semantics).
+
+**Input:** `summary` + the first 1,500 characters of the description (Jira keys masked). **Output:** `C3Output{rationale, verdict, cited_chunk_ids, explanation (≤ 2 sentences), doc_reference}` (`src/schemas/c3.py`). A validator requires `doc_reference` when the verdict is `already_supported`.
+
+**Design** (`src/components/scope_checker.py`, prompt `src/prompts/c3_scope.md` v1):
+- `DocIndex` over `data/processed/doc_chunks.jsonl`, reusing `src/retrieval` (BM25 / dense bge-small / hybrid RRF).
+- One generator call (`deepseek/deepseek-v4.1-flash-1017`, temperature 0, reasoning off) with the top-k chunks and their ids.
+- The four label definitions in the prompt are identical to the labelling guidelines (unit-tested).
+- Prompt rule: if the excerpt that would show support is not among those given, say "the provided docs do not show …" and do not name an API from memory.
+
+**Evaluation data and caveats:**
+- **Labels:** the user's 80 scope labels, from a **single non-expert annotator**. They are split into dev 30 / test 50 (stratified, seed 42, frozen in `data/eval/scope_split.json`). All tuning is on dev; test runs once.
+- **Label bias toward BM25:** the labels were made after seeing `label_cli`'s BM25 top 5, as 280-character previews. Two cases show the effect:
+  - SPARK-33809 ("all columns except"): labelled `needs_development`; the `SELECT * EXCEPT` chunk (`sql-ref-syntax-qry-star#000`) was not among the 5 shown, and dense retrieval finds it;
+  - SPARK-48643: labelled `needs_development` before `spark.sql.redaction.options.regex` was in the corpus.
+  So hit@k is a **lower bound biased toward BM25**, and the labels themselves lean toward what BM25 showed.
+- **Two subsets** (decisions.md):
+  - **docs-evidenced** (a supporting chunk from labelling or from the evidence review, `data/eval/scope_evidence_added.jsonl`): the primary measure;
+  - **knowledge-based** (no chunk): treated as **noisy labels**. Some `already_supported` labels there are educated guesses, not verified knowledge.
+  - **Caveat on docs-evidenced:** "supporting chunk" was never defined in `label_cli`. In dev, none of the 12 docs-evidenced `already_supported` chunks states the requested capability (4 on-topic, 8 unrelated; `label_cli` reproduces all 80 stored top-5 lists, so this is what was shown). This subset therefore measures agreement with an annotator who found a related doc. It is the more reliable subset, not a clean gold standard.
+
+### C3 retrieval (dev, final corpus of 2,932 chunks; `eval/results/c3_retrieval_20261115T154100Z.json`)
+
+| Variant | hit@1 | hit@5 | hit@8 | relevance@5 (uncalibrated) | any-relevant@5 |
+|---|---:|---:|---:|---:|---:|
+| BM25 | 0.917 | 1.000 | 1.000 | 0.060 | 0.200 |
+| **dense** | 0.000 | 0.167 | 0.250 | **0.080** | 0.233 |
+| hybrid | 0.250 | 0.417 | 0.417 | 0.073 | 0.267 |
+
+- hit@k uses the 12 dev items that had a supporting chunk at labelling time; BM25's 1.0 is circular (those chunks came from BM25's top 5).
+- **Selection rule:** relevance@5, then hit@5. Dense was chosen on all three corpus versions.
+- **Caveat:** the relevance judge failed calibration (κ −0.29, below), so the variant choice rests on an **uncalibrated proxy**.
+- **Sensitivity check:** on corpus v2, BM25 verdict accuracy was 0.267 vs 0.300 for dense (`c3_verdict_20261115T151943Z.json`), so the choice does not drive the result.
+
+### C3 corpus iterations (CRISP-DM, Data Preparation ↔ Modeling; decisions.md)
+
+| Version | Corpus | Dev verdict run |
+|---|---|---|
+| v1 original | 2,034 Markdown chunks | `c3_verdict_20261115T151215Z.json` |
+| v2 + reference lists | + 111 chunks: generated SQL function and SQL config tables, which the Markdown sources only include at build time | `c3_verdict_20261115T152008Z.json` |
+| v3 + one-entry chunks | the reference as 898 one-entry chunks (`title > heading` + one line) | `c3_verdict_20261115T154133Z.json` |
+
+The user fixed v3 as the **last** corpus iteration, with no further tuning on the 30 dev items. All three runs use dense retrieval and k = 8, chosen per version by dev accuracy (v3 k-grid: 3 → 0.333, 5 → 0.267, **8 → 0.367**).
+
+**Accuracy by subset** (dev; `eval/results/c3_compare_20261115T161018Z.json`, evidence review included):
+
+| Version | All (n=30) [95% CI] | Docs-evidenced (n=17) | Knowledge-based (n=13) | macro-F1 (all) |
+|---|---:|---:|---:|---:|
+| majority baseline | 0.533 | 0.706 | 0.538 | — |
+| v1 original | 0.333 [0.17–0.50] | 0.235 | 0.462 | 0.243 |
+| v2 + reference lists | 0.300 [0.17–0.47] | 0.176 | 0.462 | 0.218 |
+| **v3 + one-entry chunks** | **0.367** [0.20–0.53] | **0.235** | **0.538** | **0.271** |
+
+**Dev confusion matrices** (rows = label, columns = prediction: AS = already_supported, ND = needs_development, OOS = out_of_scope, II = insufficient_info; figures `reports/figures/c3_dev_v{1_original,2_reference_lists,3_one_entry}.png`):
+
+| label ↓ | v1: AS | ND | OOS | II | v2: AS | ND | OOS | II | v3: AS | ND | OOS | II |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| AS (16) | 1 | 10 | 2 | 3 | 1 | 9 | 2 | 4 | **2** | 8 | 2 | 4 |
+| ND (10) | 2 | 8 | 0 | 0 | 2 | 7 | 0 | 1 | 2 | **8** | 0 | 0 |
+| OOS (3) | 0 | 2 | 0 | 1 | 0 | 3 | 0 | 0 | 0 | 3 | **0** | 0 |
+| II (1) | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | **1** |
+
+**Reading the iteration:**
+- **What the corpus fix gained:** v3 gains two items over v2 (+0.067; the CIs overlap) and no class pattern changes.
+- **Where it helped:** the gain is where the docs had the answer. SPARK-31008 (`json_array_length`) is now predicted `already_supported`, citing the one-entry chunk. SPARK-33466 (Imputer `mode`) is correct with a chunk the model found itself (`ml-features#035`), not the one the annotator chose.
+- **The dominant error:** `already_supported` labels predicted as `needs_development` (8 of 16). For a docs-grounded system that cannot find the capability in the docs, this is the expected answer.
+- **Why knowledge-based scores higher (0.538) than docs-evidenced (0.235):**
+  - knowledge-based is mostly `needs_development` labels (7 of 13), which match the model's tendency to predict it;
+  - on its 4 `already_supported` labels the model gets 0, which is correct behaviour for a docs-grounded system when the docs are silent.
+  - The gap is **label semantics vs a docs-grounded system**, not retrieval quality.
+
+**Other dev metrics (v3, k = 8):**
+- `doc_reference` grounded in the retrieved chunks: **4 / 4 (1.0)**;
+- invalid citations: 0.0;
+- explanation ≤ 2 sentences: 0.967;
+- items without a citation: 4;
+- citation support: 0.182 (55 citations; **uncalibrated**);
+- generator: $0.067 per 100 calls, p50 2.0 s, p95 5.4 s.
+
+### C3 judge calibration (`eval/results/c3_judge_calibration_20261115T160918Z.json`; L2 update in decisions.md)
+
+| Judge | n | κ human vs judge | Agreement | Repeat agreement (κ) | Status |
+|---|---:|---:|---:|---:|---|
+| citation support | 30 | −0.04 | 0.40 | 0.87 (0.68) | **uncalibrated** |
+| chunk relevance | 14 | −0.29 | 0.36 | 0.93 (0.86) | **uncalibrated** |
+
+- **Criterion mismatch, not judge noise.** The judge is self-consistent (repeat agreement 0.87 / 0.93).
+  - On `already_supported` citations, annotator and judge agree on 4 of 5.
+  - On "the docs do not show X" answers they agree on 8 of 25. The annotator counted the **closest related chunk** as support (18 yes); the judge required the chunk to **state the claim** (5 yes).
+- **Adopted definition (user decision):** the judge's stricter reading is the one the product needs: no claim without evidence. It is the definition of "citation support" from now on.
+- **What this means for the labels:** the annotator's labels used a looser criterion. That is a **limitation of the annotation**, and it applies to the supporting chunks and the relevance labels too.
+- **κ values are kept as measured** (−0.04, −0.29). Judge-based numbers (citation support, relevance@5) stay **uncalibrated proxies**. No strong-tier judge (L2 fallback not applied).
+- **Lesson, now a project rule (AGENTS.md):** future judge prompts and calibration CLIs show the same rubric with explicit edge cases: absence claims, partial support, paraphrase.
+
+### C3 error analysis: all 19 dev errors (v3 · dense · k = 8)
+
+Categories:
+- **noisy label:** the docs do not support the label, and the verdict is consistent with the docs;
+- **ambiguity:** both readings are defensible under the four definitions;
+- **retrieval miss:** the corpus does not contain the needed doc;
+- **reasoning:** the relevant chunk was present and the verdict is still wrong.
+
+| Key · label → prediction | Category | Hypothesis |
+|---|---|---|
+| SPARK-29881 AS → ND | noisy label | Asks for a codegen "barrier" API. The evidence chunk is ML `Pipeline.transform` (word match); no such API is in the docs. |
+| SPARK-30557 AS → II | noisy label | Asks to *document* `SPARK_SUBMIT_OPTS`; the variable is in no chunk. II ("docs do not show") is the docs-grounded answer. |
+| SPARK-31142 AS → ND | noisy label | Internal PySpark cleanup. The evidence chunk is a GraphX/SparkR config table. |
+| SPARK-31340 AS → ND | noisy label | Servlet filter `destroy()` on shutdown. The evidence chunk is the Structured Streaming quick example. |
+| SPARK-33809 ND → AS | noisy label | The model cites `SELECT * EXCEPT (…)` (`sql-ref-syntax-qry-star#000`), which exists in 4.3.0. The label was made without seeing that chunk (BM25 bias). |
+| SPARK-34950 AS → OOS | noisy label | Benchmark refresh in the repo; no evidence. *Secondary reasoning issue:* OOS is meant for third-party or other products, not repo maintenance. |
+| SPARK-35154 AS → ND | noisy label | RpcEnv self-deadlock. The evidence is the streaming `Receiver.onStop`, a different component; the model notes this explicitly. |
+| SPARK-35365 AS → II | noisy label | Asks about `spark.sql.analyzer.maxIterations`, which is not in the corpus (internal config). The evidence chunk is barrier-mode configs. |
+| SPARK-35594 AS → II | noisy label | CI workflow cleanup. The evidence chunk is a Hive UDTF example. |
+| SPARK-35910 AS → ND | noisy label | Internal shuffle optimisation (resolution Fixed); no doc can show it. |
+| SPARK-39973 AS → ND | noisy label | Suppress an internal warning (resolution Fixed); no doc can show it. |
+| SPARK-26008 OOS → ND | ambiguity | Expose the test clock in production: "contradicts the design" or "needs code". Both fit. |
+| SPARK-31218 AS → ND | ambiguity | Users can `cache()` their own RDDs (the evidence chunk), but the request is about an internal RDD inside MLlib. |
+| SPARK-35598 OOS → ND | ambiguity | Internal `RowMatrix` change, Won't Fix. ND ("reasonable, needs code") is defensible. |
+| SPARK-35862 OOS → ND | ambiguity | UTC-only watermark formatting, Won't Fix. Declined ≠ out of scope. |
+| SPARK-47090 AS → OOS | ambiguity | Skip a CI job on branch-3.4: none of the four labels fits a repo task. *Secondary reasoning issue:* OOS misapplied, as in SPARK-34950. |
+| SPARK-48643 ND → AS | ambiguity | The model: "the regex is already configurable, so set a stricter one". The label: "changing the default needs code". The explanation states both. |
+| SPARK-42732 AS → ND | retrieval miss | `getActiveSession` is in no chunk: method-level API reference (Scala/Python API docs) is not in the corpus. The evidence chunks show Spark Connect in general. |
+| SPARK-46085 AS → II | retrieval miss | Same gap for `Dataset.groupingSets` in the Scala Connect client. |
+
+**Counts:** noisy label 11, ambiguity 6, retrieval miss (corpus gap) 2, reasoning 0 as the primary cause (2 secondary: OOS applied to repo-maintenance tasks).
+
+**3 worst examples:**
+1. **SPARK-33809:** the system is right by the 4.3.0 docs and is scored wrong. This is the BM25 label bias in action.
+2. **SPARK-42732:** a real feature that exists, missed because the corpus has no API reference. This is the one gap a docs-grounded system could close: add the Scala/PySpark API docs. Out of scope here, since the corpus is frozen by the user's decision.
+3. **SPARK-47090:** a repository task labelled AS and predicted OOS. The four-label scheme has no slot for CI/repo work. In the planned flow C3 also runs for `task` tickets, so whether to skip C3 for repository tasks is an open pipeline decision, to be made with the orchestration (not tuned on dev).
+
+**Not pursued:** prompt changes for the OOS-on-repo-tasks pattern (2 items). The user froze dev tuning after corpus v3, and 2 of 30 items would be overfitting.
+
+### C3 final configuration (approved 2026-11-15, frozen in `eval/c3_final_config.json`)
+
+| Setting | Value |
+|---|---|
+| Corpus | v3, 2,932 chunks (sha256 prefix `16f4452d3d17bc2c`) |
+| Retrieval | **dense** `BAAI/bge-small-en-v1.5`, **k = 8** |
+| Generator | `deepseek/deepseek-v4.1-flash-1017`, temperature 0, reasoning off (L2) |
+| Prompt | `c3_scope/v1` |
+| Reported on test | accuracy, macro-F1, per-class metrics and confusion matrix with bootstrap CIs, on all / docs-evidenced / knowledge-based; `doc_reference` grounding; citation support (marked uncalibrated) |
+
+- **Targets (B1):** accuracy ≥ 0.65 is **not met on dev** (0.367, below the 0.533 majority baseline).
+- **Expected on test:** the same picture. For the reasons above, the number mostly measures agreement with a non-expert annotator.
+- **Safety property, met on dev:** every `already_supported` claim names a reference grounded in a retrieved chunk (4 / 4).
+- **Precision of `already_supported` against the labels:** 0.50 (2 of 4). Of the other 2, SPARK-33809 is supported by the docs and SPARK-48643 is ambiguous.
+
+### C3 test results (final config, evaluated once; `eval/results/c3_test_20261115T161845Z.json`)
+Dense · k = 8 · corpus v3 (sha256 prefix checked against the config before the run) · `c3_scope/v1`.
+
+| Subset | n | Accuracy [95% CI] | Majority | macro-F1 | `already_supported` claims | Precision of `already_supported` | `doc_reference` grounded |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| all | 50 | 0.320 [0.20–0.46] | 0.520 | 0.223 | 8 | **0.625** (5/8) [0.25–0.88] | **8/8 (1.0)** |
+| docs-evidenced | 25 | 0.200 [0.08–0.36] | 0.720 | 0.121 | 4 | 0.75 (3/4) | 4/4 |
+| knowledge-based (noisy labels) | 25 | 0.440 [0.24–0.64] | 0.520 | 0.306 | 4 | 0.50 (2/4) | 4/4 |
+
+The precision CI is a bootstrap over the 8 claims, seed 42.
+
+**Test confusion matrix** (rows = label; one generation failure counted as wrong; figure `reports/figures/c3_test.png`):
+
+| label ↓ | AS | ND | OOS | II | failed |
+|---|---:|---:|---:|---:|---:|
+| AS (26) | **5** | 13 | 0 | 8 | 0 |
+| ND (18) | 1 | **10** | 2 | 4 | 1 |
+| OOS (5) | 2 | 2 | **0** | 1 | 0 |
+| II (1) | 0 | 0 | 0 | **1** | 0 |
+
+**Reading:**
+- **Accuracy is below the majority baseline, as on dev** (0.320 vs 0.367). The B1 target of 0.65 is **not met**.
+- **Why:** `already_supported` labels are mostly answered `needs_development` or `insufficient_info` (21 of 26). Recall of `already_supported` is 0.19.
+  - The label limitations above apply: single non-expert annotator, BM25-biased labels, loose "support" criterion.
+  - The model predicts `insufficient_info` far more often on test than on dev: 14 of 50 vs 5 of 30. Under M3 it behaves like `needs_development`: the user continues to a ticket.
+- **Key metric (M3), precision of `already_supported`: 0.625** (5 of 8), and **all 8 claims have a grounded `doc_reference`**. The 5 correct claims cite exactly the right doc:
+  - `spark.sql.files.ignoreMissingFiles`;
+  - `spark.sql.adaptive.coalescePartitions.parallelismFirst`, from the generated reference added in corpus iteration 1–2;
+  - `spark-sql -S`;
+  - `spark.master.rest.host`;
+  - the REST API `/api/v1`.
+
+**The 3 wrong `already_supported` claims (the costly error under M3):**
+
+| Key · label | Claim | Hypothesis |
+|---|---|---|
+| SPARK-45939 · OOS | `transformWithState` | The SPIP asked for an "Arbitrary State API v2", which shipped in Spark 4.0. The claim is right by the 4.3.0 docs; the label judged the 2023 proposal. **Noisy label.** |
+| SPARK-19469 · ND | `SparkSession.builder.remote` | Wants a PySpark client on a separate machine from the driver. Spark Connect does exactly this in 4.x. **Noisy / time-shifted label** (2017 ticket). |
+| SPARK-32413 · OOS | "pyspark" | A "which tool should I use" support question. The answer is grounded (`EsInputFormat` is in `rdd-programming-guide#010`), but the reference is generic. **Label ambiguity**, and a **limitation of the grounding check**: a generic name like "pyspark" passes trivially. |
+
+**Other observations:**
+- By the 4.3.0 docs, 2 of the 3 wrong claims are defensible, so label-measured precision (0.625) is conservative.
+- **Generation failure, SPARK-31302:** the model twice chose `already_supported` without a `doc_reference`, and the schema validator rejected it after one repair. Under M3 a failure means "no stop", so the user continues to a ticket; the label is ND, so that is the right outcome.
+- **Cost:** generator $0.062 per 100 calls, p50 1.8 s, p95 5.2 s, 3 repairs; judge $0.034 per 100 calls. The citation-support rate of 0.376 is uncalibrated.
+- **Not done after test:** no prompt or grounding-check change on the basis of test. A specificity rule for `doc_reference` (e.g. require an identifier, not a product name) is a candidate for a future iteration, to be judged on new data.
+
+### C3 pipeline decision (M3)
+**C3 is precision-oriented.**
+- The assistant says "already supported" only when the verdict is `already_supported` **and** `doc_reference` is grounded in the retrieved chunks.
+- Any other outcome lets the user continue to a ticket: another verdict, an ungrounded reference, or a generation failure.
+- **Why precision:** a false `needs_development` costs one unnecessary ticket. A false `already_supported` wrongly stops the user. So **precision of `already_supported`** is the key C3 metric, and accuracy / macro-F1 are secondary.
+- **Test numbers:** precision 0.625 on 8 claims, all grounded.
+
+## Evaluation set for C4 and C5: ablation (decision E1, `data/eval/README.md`)
+- **Source:** rich real tickets with the verbatim text of 1–2 required fields deleted.
+  - dev = 58 val tickets, 303 items; test = the 60 simulator candidates, 301 items. Frozen, with a test hash.
+  - Variants: `original`, `minus_<f>` / `minus_<f>_<g>`, `answered_<f>` (asked, the user gives the text back), `unknown_<f>` (asked, the user says they don't know).
+- **Gold:** a generator extraction with verbatim quotes, located deterministically; the 10 spot-check extractions (`eval/results/gap_spotcheck_20261115T164526Z.md`) were reviewed by the assistant, not confirmed by the user: no quote assigned to the wrong field; 2 doubtful values (SPARK-33121 environment says "Java API" for Scala code in a ```java fence; SPARK-52965 environment quotes a sentence about the failure).
+- **Rules (user decision):**
+  - a field that loses part of its text through another field's deletion is left out of scoring for that variant (no half-deleted field is ever scored);
+  - the title is never deleted.
+- **Limitation, quantified below:** a deleted field can survive in the title, in another field's passage, or in text the extraction did not quote. So results on deleted fields are a **lower bound** for C4.
+
+## C4 · Gap detector
+
+**Purpose:** after every user turn, tell the dialogue which ticket fields are still missing, so that C5 asks only about those and C6 composes only from what the user actually gave.
+
+**Input:** the conversation (user and assistant turns) and the ticket class. **Output:** for **every** field of the class (common + class-specific) a `FieldState{evidence, status, value}`, with status confirmed | assumed | missing | unknown (`src/schemas/c4.py`).
+
+**Design** (`src/components/gap_detector.py`, prompt `src/prompts/c4_gap.md` v2):
+- **One generator call.** The output model is built per class with `pydantic.create_model` and has exactly that class's fields, so a missing or extra field fails validation.
+- **Status rubric with explicit edge cases** (the AGENTS rubric rule applied to a generator):
+  - partial information counts as confirmed;
+  - "I don't know" volunteered before anyone asked counts as missing;
+  - `unknown` only after the assistant asked;
+  - information only the assistant mentioned counts as missing.
+- **`max_tokens` 3,000.**
+- **v1 → v2 (smoke fix on 20 dev items, not the tuning revision):**
+  - v1 copied whole stack traces into `value` and `evidence`; 3 of 20 outputs were cut off at the cap;
+  - v1 left `evidence` empty for 20 confirmed fields, because the key had a default;
+  - v2 makes all keys required with `evidence` first and asks for short quotes and one-sentence values. Result: 0 failures, grounding 1.0, half the cost.
+
+### C4 dev results (`eval/results/c4_dev_20261115T165319Z.json`; 303 items, 1,226 scored class-field judgements)
+
+| Metric | Value |
+|---|---:|
+| Missing-field F1, positive = "missing" [95% CI] | **0.825** [0.80–0.85] (P 0.946, R 0.731) |
+| Same, positive = "missing + assumed" (not confirmed) | 0.867 [0.85–0.89] (P 0.878, R 0.856) |
+| Recall on **natural gaps** (fields already missing in the real ticket, n = 501) | **0.912** (assumed 28, confirmed 16) |
+| Recall on **deleted** fields (n = 173) | 0.208 (confirmed 81, assumed 56) |
+| False-confirmed rate on deleted fields (upper bound, see below) | 0.468 (+ 0.324 marked assumed) |
+| `answered_<f>`: field confirmed after the user's answer (n = 52) | 0.942 |
+| `unknown_<f>`: field marked `unknown` (n = 52) | **0.981** |
+| False-unknown rate (fields marked unknown with no "don't know" answer) | **0.000** |
+| Confirmed values with grounded evidence | 0.989 |
+| Failures; cost; latency | 0 of 303; $0.031 / 100 calls; p50 2.1 s, p95 4.8 s |
+
+**Per class** (missing-F1): bug 0.849, feature 0.873, idea 0.692, task 0.829.
+
+**Per field:**
+- **Structured fields are near-perfect:** regression_since 0.99, workaround 0.99, design_reference 1.0, definition_of_done 0.98, open_questions 0.96, alternatives_considered 0.95, acceptance_criteria 0.91.
+- **Narrative fields are low:** problem_hypothesis 0.00 (n = 21), proposed_behavior 0.00 (16), motivation 0.14 (13), actual_behavior 0.16 (23), environment 0.20 (9), goal 0.33 (15).
+- **Those low supports are almost all deleted fields.** The narrative fields are the ones a ticket restates in several places, including the title.
+
+### C4 error analysis (all dev errors, grouped)
+1. **Deleted field still resolved (137 of 173): mostly gold leakage, partly over-reading.**
+   - **Where C4's evidence comes from** (deterministic): another field's passage 58, text the extraction never quoted 45, the title 33, not found 1.
+   - **Leakage examples:**
+     - SPARK-33338 `minus_expected_behavior`: the title says "GROUP BY using literal map **should not fail**", which is the expected behaviour, and the title is never deleted;
+     - SPARK-32764 `minus_steps_to_reproduce_actual_behavior`: the reproduction code also sits in the "2.4.6 result" block quoted for expected_behavior.
+   - **Over-reading examples:**
+     - SPARK-39474 `minus_problem_hypothesis` confirmed from the *proposed* API ("I'd like to do something like `df.write…options(optimize=True)`");
+     - SPARK-33338 `minus_environment` confirmed from the *working* version 1.6.3, which is regression information, not the affected environment.
+   - **These cannot be separated deterministically.** A prompt rule like "never use another field's passage" would fit the gold's artifacts (e.g. it would wrongly flag the SPARK-32764 code as missing), so the one allowed tuning revision was **not** spent on it.
+2. **Natural gaps credited (44 of 501): over-reading.** 16 confirmed and 28 assumed, mostly inference from related information, as in group 1.
+3. **False "missing" on gold-present fields (28):** acceptance_criteria 9, related_issues 8, scope 3, expected_impact 3, others 5. The **gold is looser than C4**: the extraction counted a commit link or a CI-run URL as related_issues (SPARK-34040, SPARK-36375) and an implied expectation as acceptance criteria (SPARK-41813). C4's stricter reading is arguably the right one.
+
+**Product decision M4:** `assumed` fields are never accepted silently. C6 lists them under "Assumptions to confirm", and the UI asks the user to confirm or correct them. So C4 leaning toward `assumed` rather than `missing` is acceptable; the operational score is the "missing + assumed" view (F1 0.867). The costly error is `confirmed` on information that is gone, which the human audit (`python -m src.eval.c4_audit_cli`, 20 blind cases, stratified by evidence source) corrects for leakage. 0.468 remains the upper bound.
+
+**3 worst examples:** SPARK-39474 (problem from the solution), SPARK-33338 environment (wrong version used as the environment), and SPARK-47208 `minus_proposed_behavior` (C4 confirmed the deleted field, so in chained mode no question is asked about it; in oracle mode C5 also returned no question for this item, the only empty turn).
+
+## C5 · Question generator
+
+**Purpose:** turn the missing fields into at most 2 concrete questions per turn.
+
+**Input:** class, conversation, missing fields (required first, with YAML description and example), provided fields with values, and a do-not-ask list of `unknown` fields. **Output:** `C5Output{questions: [{target_field, question}]}`. The list is not capped in the schema, so "≤ 2" is measured; the pipeline shows the first 2.
+
+**Design:** `src/components/question_generator.py`, prompt `c5_questions/v1`, one generator call, `max_tokens` 600. Only class fields are asked about: the summary comes from the first message and the component from C1. No prompt revision was needed.
+
+### C5 dev results (`eval/results/c5_oracle_dev_20261115T165508Z.json`, `c5_chained_dev_20261115T165555Z.json`)
+
+| Metric (first 2 questions) | Oracle (gold states) | Chained (C4 states) |
+|---|---:|---:|
+| Turns with C5 called (≥ 1 missing field) | 294 / 303 | 277 / 303 |
+| ≤ 2 questions per turn | **1.000** | 1.000 |
+| Targeting rate (target ∈ gold-missing **required**) | 0.767 [0.72–0.80] | 0.431 [0.38–0.48] |
+| — targets that are gold-missing at all (required or optional) | **403 / 403** | — |
+| Redundancy (target already provided) | **0.000** | 0.046 |
+| Required-before-optional violations | **0.000** | 0.232 |
+| Required coverage | **0.993** | 0.556 |
+| Re-ask of `unknown` fields | **0.000** (n = 52) | **0.000** (n = 52) |
+| Cost; latency | $0.014 / 100 calls; p50 0.95 s | $0.012 / 100 calls; p50 0.89 s |
+
+**Reading:**
+- **C5 itself is near-perfect.** In oracle mode every question targets a missing field. The 0.767 targeting rate counts only *required* fields, and the other 94 questions ask about missing *optional* fields after all required ones were covered.
+- **The chained drop is C4's.** Of 326 gold-missing required fields:
+  - C5 asked about 158;
+  - of the 168 it did not ask about, C4 had marked **167** as assumed (76) or confirmed (91), and only 1 is a C5 miss.
+  - The chained order "violations" come from the same cause: C4 reported only optional fields as missing, so C5 correctly asked about those.
+- **Errors (all dev):** 2 coverage misses in oracle mode.
+  - SPARK-32764 `minus_steps_to_reproduce_actual_behavior` asked only about steps (2 required fields missing, 1 question);
+  - SPARK-47208 `minus_proposed_behavior` returned no question.
+- **Clarity:** 20-question samples for the user are in `eval/results/c5_questions_sample_oracle_20261115T165508Z.md` and `…_chained_20261115T165555Z.md`.
+
+### C4 leak audit (dev; `eval/results/c4_audit_20261115T170704Z.json`)
+**Setup:** 20 of the 137 deleted fields that C4 resolved, stratified by evidence source (another field's passage 8, unquoted text 7, title 5), labelled **blind** by the user with the on-screen rubric (stated / only inferable / not there).
+
+| Labels | Stated (y) | Only inferable (i) | Not there (n) |
+|---|---:|---:|---:|
+| C4 said confirmed (14) | 10 | 4 | 0 |
+| C4 said assumed (6) | 4 | 2 | 0 |
+| By source: other field's passage / unquoted text / title | 4 / 6 / 4 | 4 / 1 / 1 | 0 / 0 / 0 |
+
+| Stratified estimate | Value [95% CI] |
+|---|---:|
+| Resolved deleted fields whose information is still **stated** (gold leakage) | **0.69** [0.49–0.85] |
+| **Corrected false-confirmed rate** (confirmed while not stated) | **0.312** [0.21–0.38]; upper bound 0.468 |
+| Resolved although the information is gone (not even inferable) | **0.00** (0 of 20) |
+
+**Reading:**
+- About two thirds of C4's apparent misses on deleted fields are leakage in the ablation gold.
+- The real error is **confirming what is only inferable** (should be `assumed`), estimated at 0.31 of deleted fields.
+- C4 never resolved a field whose information was gone.
+- **Limitations:** n = 20, one annotator, a single label per case; the CI comes from a stratified bootstrap over strata of 5–8 cases. The C4-missing deleted fields (36) were not audited and are taken as not stated.
+
+### C5 question clarity (user rating of 20 dev oracle questions, `eval/results/c5_questions_sample_oracle_20261115T165508Z.md`)
+- **Rating:** mean **2.65** of 3 (13 rated 3, 7 rated 2, none rated 1).
+- **Pattern in the 7 items rated 2:** long, compound questions with "e.g." lists, mostly about process fields (acceptance_criteria, definition_of_done, expected_impact, target_users), e.g. SPARK-30286 and SPARK-33928.
+- **Hypothesis:** the YAML examples are pasted into the question as long lists. Not tuned, because the config was approved for test; a candidate for a later revision on new data (shorter questions, one example).
+
+### C4 / C5 final configurations (approved 2026-11-15; `eval/c4_final_config.json`, `eval/c5_final_config.json`)
+- C4: `c4_gap/v2`, role generator (`deepseek-v4.1-flash`, temperature 0, reasoning off), `max_tokens` 3,000.
+- C5: `c5_questions/v1`, same model, `max_tokens` 600; evaluated in oracle and chained modes.
+- The ablation test hash is checked before the run.
+
+### C4 test results (evaluated once; `eval/results/c4_test_20261115T170923Z.json`; 301 items, 1,153 scored field judgements)
+
+| Metric | Dev | **Test** |
+|---|---:|---:|
+| Missing-field F1, "missing" [95% CI] | 0.825 | **0.837** [0.81–0.86] (P 0.949, R 0.748) |
+| Missing-field F1, "missing + assumed" (operational, M4) | 0.867 | **0.889** |
+| Recall on natural gaps | 0.912 (n = 501) | **0.935** (n = 479; assumed 22, confirmed 9) |
+| Recall on deleted fields | 0.208 (n = 173) | 0.214 (n = 168; assumed 72, confirmed 60) |
+| False-confirmed on deleted fields (upper bound) | 0.468 (corrected 0.31) | 0.357 (not audited) |
+| `answered` → confirmed / `unknown` detected / false-unknown | 0.942 / 0.981 / 0.000 | 0.941 / **1.000** / **0.000** |
+| Confirmed values with grounded evidence | 0.989 | 0.988 |
+| Failures; cost; latency | 0; $0.031 / 100; p50 2.1 s | 0; $0.031 / 100; p50 2.1 s, p95 4.2 s |
+
+**Reading:**
+- Per class on test (missing-F1): bug 0.882, feature 0.856, task 0.859, idea 0.647.
+- **Test confirms dev.** Idea stays the weakest class: its fields (problem, users, impact) are narrative and restated throughout a ticket.
+- **The dev audit applies only qualitatively to test.** The test false-confirmed rate (0.357) is an upper bound; its leakage was not audited.
+
+### C5 test results (evaluated once; `eval/results/c5_oracle_test_20261115T171019Z.json`, `c5_chained_test_20261115T171107Z.json`)
+
+| Metric (first 2 questions) | Oracle dev | **Oracle test** | Chained dev | **Chained test** |
+|---|---:|---:|---:|---:|
+| Turns with C5 called | 294 | 284 | 277 | 279 |
+| ≤ 2 questions per turn | 1.000 | **1.000** | 1.000 | **1.000** |
+| Targets that are gold-missing (any) | 403 / 403 | **393 / 393** | — | — |
+| Targeting rate (gold-missing required) | 0.767 | 0.751 [0.71–0.80] | 0.431 | 0.414 [0.37–0.46] |
+| Redundancy | 0.000 | **0.000** | 0.046 | 0.050 |
+| Required-before-optional violations | 0.000 | **0.000** | 0.232 | 0.225 |
+| Required coverage | 0.993 | **1.000** | 0.556 | 0.544 |
+| Re-ask of `unknown` fields | 0.000 | **0.000** (n = 51) | 0.000 | **0.000** (n = 51) |
+
+**Reading:**
+- **C5 alone is reliable on test.** Every question targets a missing field, no question repeats given information, and nothing the user said they don't know is asked again.
+- **The chained losses are C4's, as on dev.** Of the gold-missing required fields C5 did not ask about on test, 155 of 159 were marked assumed (91) or confirmed (64) by C4.
+- **Under M4, the assumed ones still reach the user** as "Assumptions to confirm". So the end-to-end gap is the confirmed-but-only-inferable case quantified by the audit.
+
+## C6 · Ticket composer
+
+**Purpose:** turn the collected field states into a Jira-ready ticket that follows the Spark contributing guide and never invents details.
+
+**Input:** class, the confirmed component, C4 field states, the conversation. **Output:** `C6Output{title, jira_type, component, labels, body_markdown, fields}` (`src/schemas/c6.py`).
+
+**Design:** the LLM writes the text, and code enforces the rules (`src/components/ticket_composer.py`, prompt `c6_compose/v1`, `max_tokens` 2,000).
+- **LLM** (one generator call), producing a `C6Draft`:
+  - the title, the labels (`correctness` / `data-loss` only if stated), and one text per field;
+  - Given/When/Then for feature acceptance criteria and task definition of done;
+  - prompt rubric: never invent versions, numbers, stack traces, config keys or APIs; never set priority or fix version; a descriptive title, with vague titles listed as negative examples.
+- **Code, `render()`** (deterministic):
+  - `jira_type` = `submit_as` from `ticket_types.yaml`, and the confirmed component;
+  - `unknown` → "Unknown (reporter)"; required `missing` → "_Not provided_" (optional missing fields are omitted);
+  - every `assumed` field is listed under **"Assumptions to confirm"** (M4);
+  - a fixed template with no priority or fix-version line.
+- **Why split it:** the hard rules hold by construction and are still measured, as regression checks.
+- **Alternative rejected:** the LLM writing the whole body. That would make the format, the Unknown rendering and the assumptions list depend on the prompt.
+
+### C6 dev results (`eval/results/c6_dev_20261115T172323Z.json`; 303 ablation items with the C4 dev states; deterministic metrics)
+
+| Metric | Dev |
+|---|---:|
+| Schema-valid | **1.000** (303 / 303) |
+| Required-field coverage (content or "Unknown (reporter)") | 0.766. Of the fields C4 resolved: **1.000**. The rest are missing by construction (deleted fields) |
+| Missing fields filled with content | **0** |
+| Confirmed values grounded (content-word share ≥ 0.6 or a verbatim C4 quote) | **0.876** [0.85–0.90] (n = 606) |
+| Assumed values grounded (inference, listed for confirmation) | 0.541 [0.48–0.61] (n = 229) |
+| Invented-token rate (title + confirmed fields) | **0.017**; tickets with ≥ 1: 0.079 [0.05–0.11] |
+| Assumptions-section completeness / Unknown rendered | 1.000 / 1.000 |
+| Given/When/Then in acceptance criteria / definition of done | 1.000 |
+| Labels without a cue / priority or fix-version lines | 10 (see below) / **0** |
+| Title 4–20 words and not the reporter's first line | 0.993 |
+| Cost; latency | $0.030 / 100 calls; p50 1.5 s, p95 2.8 s; 0 repairs |
+
+**Metric fix before the dev run** (smoke on 20 items; a measurement fix, not tuning):
+- The first invented-token check flagged 14% of tokens:
+  - it included the **assumed** fields, which carry C4's inference on purpose (M4);
+  - unbalanced backticks around code fences paired prose fragments into "tokens";
+  - it flagged generic Spark nouns ("DataFrame").
+- **After the fix:** the check covers the title and the confirmed fields; it strips fence markers; backticked tokens have no whitespace; there is a short generic-noun list.
+- Grounding is now reported separately for confirmed and assumed values. Logged in `decisions.md`.
+
+### C6 error analysis (dev, all errors)
+1. **Invented tokens: 19 distinct (ticket, token) pairs over 10 tickets.**
+   - **Reformatting of the user's own text (11):** e.g. `sc.addFile()` for "sparkcontext.addfile()", `spark.files.overwrite=true` for `('spark.files.overwrite', 'true')`, `JdbcUtils.getCatalystType` from separate mentions.
+   - **Inherited from C4 values (6, 4 tickets):** C4 had already put them in a field value. Examples: SPARK-31462's suggested getopts fix `"b:n"` as expected behaviour; a "DoS" CVE description (SPARK-49897).
+   - **Invented by C6 (2):** "Scala 2.12.5" in SPARK-33997's environment, and "IEEE 754" in SPARK-32764's expected behaviour.
+2. **Ungrounded confirmed values (12.4%):** concentrated in narrative idea/feature fields (problem_hypothesis 13, target_users 9, motivation 7, goal 7, expected_impact 6).
+   - **Hypothesis: paraphrase, not invention.** The rewrite lowers the content-word overlap, while the invented-token rate stays low in those tickets.
+3. **Labels without a cue (10):**
+   - 7 are SPARK-32764 variants ("-0.0 < 0.0 returns true … should be false"): a wrong result, so `correctness` is **right**, and the cue regex is too narrow.
+   - **3 are wrong labels:** SPARK-52965 (connection terminated), SPARK-34378 (Avro validation), SPARK-45126 (history server mixes tenant logs).
+4. **Title (2):** the title equals the reporter's already-descriptive summary (SPARK-34378, SPARK-53182). That's metric strictness, not an error.
+
+**3 worst examples:**
+- **SPARK-33997:** the invented "Scala 2.12.5" is the costly kind, a wrong version in a bug report.
+- **SPARK-52965:** `correctness` on a connection failure would mislabel the Jira issue.
+- **SPARK-31462:** C4's suggested fix rendered as confirmed expected behaviour. Inference passed through the C4 → C6 chain; the M4 confirmation step does not catch it, because C4 called it confirmed.
+
+**No prompt revision.** The C6-owned inventions are 2 in 303 tickets and the wrong labels 3 in 303: no systematic pattern.
+
+## Pipeline (`src/pipeline.py`, decisions M1–M4)
+
+The pipeline is an explicit state machine; the session state (`src/schemas/pipeline.py`) is JSON-serializable. Each user action runs the automatic steps up to the next user input. Every step is a `TraceEvent` (latency; LLM cost and cache state from `logs/llm_calls.jsonl` via `llm.session_calls`), and it is logged with the session_id.
+
+```mermaid
+stateDiagram-v2
+    [*] --> intake
+    intake --> confirm_class: start(text) / C1 top-2 + C2 pass 1 (summary-only, 0.821)
+    confirm_class --> asking: confirm_class / C4, required field missing, C5 (≤ 2 questions)
+    asking --> asking: answer / C4, still missing and turns < 4, C5
+    asking --> scoping: answer "skip", or nothing required missing, or 4 turns
+    confirm_class --> scoping: C4, nothing required missing
+    state scoping <<choice>>
+    scoping --> scope_decision: feature/task/idea, C3 already_supported AND doc_reference grounded (M3)
+    scoping --> composing: bug, or any other C3 outcome
+    scope_decision --> stopped: scope_decision(stop)
+    scope_decision --> composing: scope_decision(continue)
+    state composing <<choice>>
+    composing --> confirm_assumptions: C2 pass 2 (full, 0.839, dismissed removed) + C6, assumed fields exist (M4)
+    composing --> done: C2 pass 2 + C6, no assumptions
+    confirm_assumptions --> done: confirm_assumptions(corrections) / re-render without LLM
+    stopped --> [*]
+    done --> [*]
+```
+
+**Design choices:**
+- **Questions continue only while a *required* field is missing.** Optional fields are asked about only alongside a required one (C5's second question), so they never cost an extra turn.
+- **"skip"** goes straight to the scope and compose steps, without another C4 call: the conversation has not changed since the last one.
+- **Confirming assumptions** turns every assumed field into confirmed (as is, or with the correction, which is also added to the conversation). The ticket is **re-rendered deterministically** (`render()`), with no second LLM call, so the rest of the ticket does not change.
+- **Graceful failure:** any exception in a step is caught. The trace records the error; `last_error` is set; the stage is kept; `retry()` reruns the segment (an unchanged LLM call is a cache hit). The app shows "This step failed (…). Try again, or type skip." and a Retry button.
+- **C1 in the app:** the top-2 classes come with probabilities. The component is pre-filled with C1's top-1, and the top 3 are shown as suggestions (a refinement of M1, logged).
+- **M6 (UX, from the user's manual run):**
+  - C2 pass 1 is shown as "related issues" and never alerts; only pass 2 may.
+  - The confirmed component always overrides C4's.
+  - A missing optional field is "not provided", not "missing"; `labels` is hidden unless set.
+  - The 🐞 title icon.
+- **Headless driver** (`src/pipeline_driver.py`) for the e2e evaluation: a fixed policy (top-1 class and component, dismiss nothing, continue on the scope stop, accept the assumptions) and `answer_fn` for the simulated user.
+
+**Verification:**
+- `tests/test_pipeline.py` (9 tests, mocked components): every transition, the 4-turn cap, skip, the M3 stop only when grounded, dismissed keys excluded from pass 2, assumption correction, failure and retry, a JSON round trip, and the driver.
+- Two real headless dialogues (bug and feature) and a scripted UI walkthrough (`streamlit.testing.AppTest`) reached `done` without exceptions:
+  - session cost about $0.001;
+  - per step: C4 about 2–3 s, C5 about 2 s, C6 about 1.8 s, C2 50–200 ms, C1 under 10 ms;
+  - first app start about 25 s (C1 fit and embedder load).

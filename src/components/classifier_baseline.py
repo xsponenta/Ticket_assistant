@@ -61,6 +61,12 @@ class BaselineC1:
         x = features.fit_transform(texts)
         return cls(features, fit_class_model(x, labels, c_class), fit_component_model(x, component_sets, c_component))
 
+    def rank_classes(self, texts: list[str], top: int = 2) -> list[list[tuple[str, float]]]:
+        """The `top` most likely classes with their probabilities, most likely first (M1: the user confirms one)."""
+        proba = self.class_model.predict_proba(self.features.transform(texts))
+        classes = list(self.class_model.classes_)
+        return [[(classes[j], float(p[j])) for j in np.argsort(-p, kind="stable")[:top]] for p in proba]
+
     def predict(self, texts: list[str]) -> list[dict[str, Any]]:
         x = self.features.transform(texts)
         proba = self.class_model.predict_proba(x)

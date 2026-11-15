@@ -11,6 +11,7 @@ All text fields are Markdown (`description_md`) and already masked (`<EMAIL>`, `
 | `duplicates.jsonl` | 248 | whole main dataset | `gold` = the earlier issue of a Jira `Duplicate` link (undirected); `null` for non-duplicate queries |
 | `scope_candidates.jsonl` | 80 | test split first, then val/train | none yet — labelled manually with `src/data/label_cli.py` → `scope_labeled.jsonl` |
 | `simulator_candidates.jsonl` | 60 | test split | none — candidates; the final selection is made later with an LLM |
+| `gap_ablation.jsonl` (+ `gap_extractions.jsonl`, `gap_ablation_meta.json`) | 303 dev + 301 test | 58 rich val tickets (dev) + the 60 simulator candidates (test) | gold missing / present / unknown fields per item, from a generator extraction with verbatim quotes (10 extractions reviewed by the assistant; not confirmed by the user) |
 
 ## classification_test.jsonl
 - Test split, at most 100 issues per class, sampled at random; all idea issues because the class is smaller.
@@ -50,3 +51,32 @@ All text fields are Markdown (`description_md`) and already masked (`<EMAIL>`, `
 - **Labels:** already_supported 42, needs_development 28, out_of_scope 8, insufficient_info 2. Majority-class accuracy is **0.525**, the C3 reference point.
 - **Agreement with the Jira resolution hint:** 0.19 (mapping in `label_cli.py`, `HINT_TO_LABEL`). It is low by design: the resolution describes the ticket *when it was filed*, the label describes Spark *today*. For example, 16 of 25 *Fixed* requests are `already_supported` now.
 - **Summary:** `eval/results/scope_labels_summary_20261115.json` (`python src/data/label_cli.py --summary`).
+
+## gap_ablation.jsonl (C4/C5, frozen 2026-11-15)
+Built by `python -m src.eval.build_gap_ablation` (`--extract` → `--show 10` spot check → `--build`); `--build` refuses
+to overwrite. The test items are hashed in `gap_ablation_meta.json` (`test_sha256`), checked before every test run.
+- **Tickets:**
+  - dev: rich val tickets chosen with the simulator-candidate rule (bug ≥ 3 of 4 `bug_signals`; other classes ≥ 80 words; seed 42, ≤ 15 per class). That gives bug / feature / task 15, idea 13 (all rich val ideas);
+  - test: the 60 `simulator_candidates` (also the e2e candidates later; both uses are test-only).
+- **Ticket text:** `Summary: …\n\nDescription:\n<first 4,000 characters>`.
+- **Gold extraction** (`gap_extractions.jsonl`, prompt `ablation_extract/v2`, role generator, one call per ticket):
+  - per class field: `quotes` (every verbatim passage that carries it), `status` (confirmed / assumed / missing) and `value`;
+  - each quote is located deterministically (`src/eval/spans.py`: exact, else whitespace-flexible).
+  - **Excluded from scoring:** fields marked `assumed` or with an unlocatable quote (gold uncertain): 55 field slots over 118 tickets.
+- **Variants** (dev / test items):
+  - `original` (58 / 60);
+  - `minus_<f>` / `minus_<f>_<g>` (141 / 139): every passage of 1–2 required fields deleted;
+  - `answered_<f>` (52 / 51): the assistant asks about *f*, and the user replies with the deleted text;
+  - `unknown_<f>` (52 / 51): the user replies "I don't know" (3 fixed phrasings).
+- **Gold:**
+  - `gold_missing` = deleted fields ∪ fields missing in the original;
+  - `gold_unknown` = *f* for `unknown_<f>` items;
+  - `gold_present` = the other confirmed fields;
+  - `excluded_fields` are not scored.
+- **Rules (user decision 2026-11-15):**
+  1. If deleting *f* also removes part of another field's text, that other field is **left out of scoring for this variant** (`excluded_fields`), so **no half-deleted field is ever scored**. On average 0.98 fields per item are excluded (both kinds).
+  2. **Text is never deleted from the title:** a field quoted in the title is not deletable, because a real conversation always starts with a title.
+  3. A deletion must leave ≥ 20 description words.
+- **Limitations:**
+  - gold comes from the same model family as C4 (circularity; mitigated by verbatim quotes and a review of 10 extractions; the 10 spot-check extractions (`eval/results/gap_spotcheck_20261115T164526Z.md`) were reviewed by the assistant, not confirmed by the user: no quote assigned to the wrong field; 2 doubtful values (SPARK-33121 environment says "Java API" for Scala code in a ```java fence; SPARK-52965 environment quotes a sentence about the failure));
+  - a deleted field can sometimes still be inferred from what remains, so C4 is also scored with "missing + assumed" as the positive class.

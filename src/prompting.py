@@ -35,3 +35,11 @@ def load_prompt(name: str, prompts_dir: Path = PROMPTS_DIR) -> Prompt:
     body = text[header.end() :]
     sections = {m.group(1): m.group(2).strip() for m in re.finditer(r"^## (\w+)\n(.*?)(?=^## |\Z)", body, re.S | re.M)}
     return Prompt(version.group(1), sections)
+
+
+ROLE_NAMES = {"user": "User", "assistant": "Assistant"}
+
+
+def render_conversation(conversation: list[dict[str, str]]) -> str:
+    """Chat turns ({"role", "content"}) as "User: …" / "Assistant: …" blocks for prompts."""
+    return "\n\n".join(f"{ROLE_NAMES[t['role']]}: {t['content']}" for t in conversation)

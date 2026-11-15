@@ -1,0 +1,9 @@
+{
+  "approved_at": "2026-11-15",
+  "approved_by": "user",
+  "source": "eval/results/c4_dev_20261115T165319Z.json",
+  "prompt_version": "c4_gap/v2",
+  "role": "generator",
+  "max_tokens": 3000,
+  "ablation_test_sha256": "bf1484fea4f6e96a3554ad623ea33f2e7d9b651535e33994cca693f7be3548f3"
+}

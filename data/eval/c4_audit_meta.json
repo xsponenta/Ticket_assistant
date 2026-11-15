@@ -1,0 +1,29 @@
+{
+ "created_at": "2026-11-15T17:01:22+00:00",
+ "c4_results": "c4_dev_20261115T165319Z.json",
+ "n_deleted": 173,
+ "c4_missing": 36,
+ "population": {
+  "other field's passage": {
+   "assumed": 25,
+   "confirmed": 33
+  },
+  "title": {
+   "confirmed": 19,
+   "assumed": 14
+  },
+  "unquoted text": {
+   "assumed": 16,
+   "confirmed": 29
+  },
+  "evidence not found": {
+   "assumed": 1
+  }
+ },
+ "quota": {
+  "other field's passage": 8,
+  "title": 5,
+  "unquoted text": 7,
+  "evidence not found": 0
+ }
+}

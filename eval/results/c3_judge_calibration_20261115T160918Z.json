@@ -1,0 +1,164 @@
+{
+ "created_at": "2026-11-15T16:09:18+00:00",
+ "citation": {
+  "n": 30,
+  "human_yes": 22,
+  "judge_yes": 10,
+  "agreement": 0.4,
+  "cohen_kappa_human_vs_judge": -0.038,
+  "repeat_n": 30,
+  "repeat_agreement": 0.867,
+  "repeat_kappa": 0.684,
+  "disagreements": [
+   {
+    "pair_id": "cite|SPARK-31340|security#012",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-31340|security#008",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-31182|rdd-programming-guide#030",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-26417|monitoring#000",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-35154|configuration#066",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-35862|streaming/apis-on-dataframes-and-datasets#018",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-28505|sql-data-sources-csv#000",
+    "human": false,
+    "judge": true
+   },
+   {
+    "pair_id": "cite|SPARK-35910|sql-performance-tuning#014",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-46085|sql-programming-guide#001",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-31218|rdd-programming-guide#038",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-28505|sql-data-sources-parquet#001",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-47090|building-spark#001",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-35365|configuration__generated#055",
+    "human": false,
+    "judge": true
+   },
+   {
+    "pair_id": "cite|SPARK-31008|sql-ref-functions-builtin__generated#436",
+    "human": false,
+    "judge": true
+   },
+   {
+    "pair_id": "cite|SPARK-28505|configuration__generated#243",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-31218|rdd-programming-guide#040",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-39973|configuration#072",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "cite|SPARK-30557|submitting-applications#001",
+    "human": true,
+    "judge": false
+   }
+  ],
+  "calibrated": false
+ },
+ "relevance": {
+  "n": 14,
+  "human_yes": 10,
+  "judge_yes": 7,
+  "agreement": 0.357,
+  "cohen_kappa_human_vs_judge": -0.286,
+  "repeat_n": 14,
+  "repeat_agreement": 0.929,
+  "repeat_kappa": 0.857,
+  "disagreements": [
+   {
+    "pair_id": "rel|SPARK-31376|streaming/real-time-mode#003",
+    "human": false,
+    "judge": true
+   },
+   {
+    "pair_id": "rel|SPARK-30760|sql-data-sources-parquet#009",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "rel|SPARK-28505|sql-ref-syntax-dml-insert-overwrite-directory#001",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "rel|SPARK-31376|streaming/apis-on-dataframes-and-datasets#065",
+    "human": false,
+    "judge": true
+   },
+   {
+    "pair_id": "rel|SPARK-48643|configuration#022",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "rel|SPARK-48643|configuration__generated#220",
+    "human": false,
+    "judge": true
+   },
+   {
+    "pair_id": "rel|SPARK-26008|streaming/real-time-mode#000",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "rel|SPARK-31142|monitoring#033",
+    "human": true,
+    "judge": false
+   },
+   {
+    "pair_id": "rel|SPARK-35154|streaming/apis-on-dataframes-and-datasets#073",
+    "human": true,
+    "judge": false
+   }
+  ],
+  "calibrated": false
+ }
+}

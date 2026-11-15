@@ -100,3 +100,21 @@ def test_balanced_calibration_sample():
 def test_c3_test_lock(tmp_path):
     with pytest.raises(SystemExit, match="--confirm-test"):
         eval_c3.check_test_allowed("test", False, False, tmp_path / "x.json", tmp_path, prefix="c3")
+
+
+def test_already_supported_precision_counts_grounded_claims_only():
+    items = {k: {"label": lab} for k, lab in [("a", "already_supported"), ("b", "needs_development"), ("c", "x")]}
+
+    def res(key, verdict, grounded):
+        out = {"verdict": verdict, "cited_chunk_ids": [], "explanation": "e.", "doc_reference": "r"}
+        return {"key": key, "output": out, "retrieved": [], "doc_reference_grounded": grounded}
+
+    results = [
+        res("a", "already_supported", True),
+        res("b", "already_supported", False),
+        res("c", "out_of_scope", None),
+    ]
+    m = eval_c3.verdict_metrics({**items, "c": {"label": "out_of_scope"}}, results, [])
+    assert m["already_supported_claims"] == 2 and m["already_supported_precision"] == 0.5
+    assert m["already_supported_grounded_claims"] == 1 and m["already_supported_precision_grounded"] == 1.0
+    assert eval_c3.precision_of(items, []) is None

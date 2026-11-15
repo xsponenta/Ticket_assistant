@@ -17,3 +17,6 @@ data/processed/doc_chunks.jsonl
 logs/
 .cache/
 data/processed/embeddings/
+
+# Fitted app models (re-created by src/pipeline_resources.py)
+models/

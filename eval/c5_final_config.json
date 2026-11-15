@@ -1,0 +1,9 @@
+{
+  "approved_at": "2026-11-15",
+  "approved_by": "user",
+  "source": ["eval/results/c5_oracle_dev_20261115T165508Z.json", "eval/results/c5_chained_dev_20261115T165555Z.json"],
+  "prompt_version": "c5_questions/v1",
+  "role": "generator",
+  "max_tokens": 600,
+  "modes": ["oracle", "chained"]
+}

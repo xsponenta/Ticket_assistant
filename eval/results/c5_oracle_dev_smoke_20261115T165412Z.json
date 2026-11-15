@@ -1,0 +1,1141 @@
+{
+ "stage": "c5",
+ "mode": "oracle",
+ "split": "dev",
+ "model": "deepseek/deepseek-v4.1-flash-1017",
+ "prompt_version": "c5_questions/v1",
+ "metrics": {
+  "n_items": 20,
+  "n_called": 17,
+  "failures": 0,
+  "n_questions_shown": 24,
+  "empty_when_required_missing": 0,
+  "le_2_per_turn": {
+   "value": 1.0,
+   "ci95": [
+    1.0,
+    1.0
+   ],
+   "n": 17
+  },
+  "targeting_rate": {
+   "value": 0.667,
+   "ci95": [
+    0.458,
+    0.833
+   ],
+   "n": 24
+  },
+  "redundancy_rate": {
+   "value": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "n": 24
+  },
+  "invalid_target_rate": {
+   "value": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "n": 24
+  },
+  "order_violation_rate": {
+   "value": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "n": 13
+  },
+  "required_coverage": {
+   "value": 1.0,
+   "ci95": [
+    1.0,
+    1.0
+   ],
+   "n": 13
+  },
+  "unknown_reask_rate": {
+   "value": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "n": 1
+  },
+  "unknown_reask_causes": []
+ },
+ "calls": {
+  "calls": 17,
+  "call_errors": 0,
+  "repairs": 0,
+  "latency_p50_ms": 1105,
+  "latency_p95_ms": 1586,
+  "prompt_tokens": 12602,
+  "completion_tokens": 1532,
+  "cost": 0.002245,
+  "cost_per_100_calls": 0.01321
+ },
+ "results": [
+  {
+   "item_id": "SPARK-31430|original",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Read CSV into df, repartition(200, 'Store').localCheckpoint(), then call df.approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001); compare with df.coalesce(1).approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001)"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6, the 0.9 and 1.0 quantiles should differ, as with coalesce(1): [1422576000.0, 1430524800.0, 1438300800.0]; this worked in Spark 2.4.5"
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6 on the 200-partition DataFrame, approxQuantile returns [1422576000.0, 1438300800.0, 1438300800.0] \u2014 equal values for the 0.9 and 1.0 quantiles"
+    },
+    "environment": {
+     "status": "confirmed",
+     "value": "Spark 3.0.0-preview (also tested 2.4.5), PySpark"
+    },
+    "regression_since": {
+     "status": "confirmed",
+     "value": "Worked in 2.4.5, fails in 3.0.0-preview"
+    },
+    "workaround": {
+     "status": "confirmed",
+     "value": "Coalesce to 1 partition before calling approxQuantile"
+    }
+   },
+   "called": false
+  },
+  {
+   "item_id": "SPARK-31430|minus_steps_to_reproduce",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "missing",
+     "value": null
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6, the 0.9 and 1.0 quantiles should differ, as with coalesce(1): [1422576000.0, 1430524800.0, 1438300800.0]; this worked in Spark 2.4.5"
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6 on the 200-partition DataFrame, approxQuantile returns [1422576000.0, 1438300800.0, 1438300800.0] \u2014 equal values for the 0.9 and 1.0 quantiles"
+    },
+    "environment": {
+     "status": "confirmed",
+     "value": "Spark 3.0.0-preview (also tested 2.4.5), PySpark"
+    },
+    "regression_since": {
+     "status": "confirmed",
+     "value": "Worked in 2.4.5, fails in 3.0.0-preview"
+    },
+    "workaround": {
+     "status": "confirmed",
+     "value": "Coalesce to 1 partition before calling approxQuantile"
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "steps_to_reproduce",
+     "question": "Could you share a minimal PySpark snippet (e.g., creating a 200-partition DataFrame and calling approxQuantile with relative error 1e-6) that reproduces the incorrect 0.9/1.0 quantile results?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31430|minus_expected_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Read CSV into df, repartition(200, 'Store').localCheckpoint(), then call df.approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001); compare with df.coalesce(1).approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001)"
+    },
+    "expected_behavior": {
+     "status": "missing",
+     "value": null
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6 on the 200-partition DataFrame, approxQuantile returns [1422576000.0, 1438300800.0, 1438300800.0] \u2014 equal values for the 0.9 and 1.0 quantiles"
+    },
+    "environment": {
+     "status": "confirmed",
+     "value": "Spark 3.0.0-preview (also tested 2.4.5), PySpark"
+    },
+    "regression_since": {
+     "status": "confirmed",
+     "value": "Worked in 2.4.5, fails in 3.0.0-preview"
+    },
+    "workaround": {
+     "status": "confirmed",
+     "value": "Coalesce to 1 partition before calling approxQuantile"
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "expected_behavior",
+     "question": "What result did you expect approxQuantile to return for [0.8, 0.9, 1.0] with relative error 1e-6, and why (e.g., the values you got from Spark 2.4.5 or from coalesce(1))?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31430|minus_actual_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Read CSV into df, repartition(200, 'Store').localCheckpoint(), then call df.approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001); compare with df.coalesce(1).approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001)"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6, the 0.9 and 1.0 quantiles should differ, as with coalesce(1): [1422576000.0, 1430524800.0, 1438300800.0]; this worked in Spark 2.4.5"
+    },
+    "actual_behavior": {
+     "status": "missing",
+     "value": null
+    },
+    "environment": {
+     "status": "confirmed",
+     "value": "Spark 3.0.0-preview (also tested 2.4.5), PySpark"
+    },
+    "regression_since": {
+     "status": "confirmed",
+     "value": "Worked in 2.4.5, fails in 3.0.0-preview"
+    },
+    "workaround": {
+     "status": "confirmed",
+     "value": "Coalesce to 1 partition before calling approxQuantile"
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "actual_behavior",
+     "question": "You showed the outputs for 0.0001 and 0.00001 relative error \u2014 which specific quantile value is wrong (e.g. the 0.9 quantile returning 1430352000.0 instead of 1430524800.0), and does the result change or error out as you lower the relative error further?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31430|minus_environment",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Read CSV into df, repartition(200, 'Store').localCheckpoint(), then call df.approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001); compare with df.coalesce(1).approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001)"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6, the 0.9 and 1.0 quantiles should differ, as with coalesce(1): [1422576000.0, 1430524800.0, 1438300800.0]; this worked in Spark 2.4.5"
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6 on the 200-partition DataFrame, approxQuantile returns [1422576000.0, 1438300800.0, 1438300800.0] \u2014 equal values for the 0.9 and 1.0 quantiles"
+    },
+    "environment": {
+     "status": "missing",
+     "value": null
+    },
+    "regression_since": {
+     "status": "confirmed",
+     "value": "Worked in 2.4.5, fails in 3.0.0-preview"
+    },
+    "workaround": {
+     "status": "confirmed",
+     "value": "Coalesce to 1 partition before calling approxQuantile"
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "environment",
+     "question": "Which Spark version(s) are affected (Jira Affects Version), and what API language and deployment are you using (e.g., PySpark on YARN)?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31430|minus_steps_to_reproduce_environment",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "missing",
+     "value": null
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6, the 0.9 and 1.0 quantiles should differ, as with coalesce(1): [1422576000.0, 1430524800.0, 1438300800.0]; this worked in Spark 2.4.5"
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6 on the 200-partition DataFrame, approxQuantile returns [1422576000.0, 1438300800.0, 1438300800.0] \u2014 equal values for the 0.9 and 1.0 quantiles"
+    },
+    "environment": {
+     "status": "missing",
+     "value": null
+    },
+    "regression_since": {
+     "status": "confirmed",
+     "value": "Worked in 2.4.5, fails in 3.0.0-preview"
+    },
+    "workaround": {
+     "status": "confirmed",
+     "value": "Coalesce to 1 partition before calling approxQuantile"
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "steps_to_reproduce",
+     "question": "Could you share a minimal, runnable snippet (e.g. in PySpark) that reproduces the 200-partition approxQuantile issue with relative error 1e-6, including how the DataFrame is partitioned?"
+    },
+    {
+     "target_field": "environment",
+     "question": "Which Spark version(s) and API language (Scala/Java/Python/R/SQL) and deployment (local, standalone, YARN, Kubernetes, cloud) show this problem?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 2,
+    "le_2": true,
+    "targeted": [
+     true,
+     true
+    ],
+    "redundant": [
+     false,
+     false
+    ],
+    "invalid_target": [
+     false,
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31430|answered_actual_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Read CSV into df, repartition(200, 'Store').localCheckpoint(), then call df.approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001); compare with df.coalesce(1).approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001)"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6, the 0.9 and 1.0 quantiles should differ, as with coalesce(1): [1422576000.0, 1430524800.0, 1438300800.0]; this worked in Spark 2.4.5"
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6 on the 200-partition DataFrame, approxQuantile returns [1422576000.0, 1438300800.0, 1438300800.0] \u2014 equal values for the 0.9 and 1.0 quantiles"
+    },
+    "environment": {
+     "status": "confirmed",
+     "value": "Spark 3.0.0-preview (also tested 2.4.5), PySpark"
+    },
+    "regression_since": {
+     "status": "confirmed",
+     "value": "Worked in 2.4.5, fails in 3.0.0-preview"
+    },
+    "workaround": {
+     "status": "confirmed",
+     "value": "Coalesce to 1 partition before calling approxQuantile"
+    }
+   },
+   "called": false
+  },
+  {
+   "item_id": "SPARK-31430|unknown_environment",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Read CSV into df, repartition(200, 'Store').localCheckpoint(), then call df.approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001); compare with df.coalesce(1).approxQuantile('seconds', [0.8, 0.9, 1.0], 0.000001)"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6, the 0.9 and 1.0 quantiles should differ, as with coalesce(1): [1422576000.0, 1430524800.0, 1438300800.0]; this worked in Spark 2.4.5"
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "With relative error 1e-6 on the 200-partition DataFrame, approxQuantile returns [1422576000.0, 1438300800.0, 1438300800.0] \u2014 equal values for the 0.9 and 1.0 quantiles"
+    },
+    "environment": {
+     "status": "unknown",
+     "value": null
+    },
+    "regression_since": {
+     "status": "confirmed",
+     "value": "Worked in 2.4.5, fails in 3.0.0-preview"
+    },
+    "workaround": {
+     "status": "confirmed",
+     "value": "Coalesce to 1 partition before calling approxQuantile"
+    }
+   },
+   "called": false
+  },
+  {
+   "item_id": "SPARK-31462|original",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Run do-release.sh with the current getopts/case block:\nwhile getopts \"bn\" opt; do\n  case $opt in\n    b) GIT_BRANCH=$OPTARG ;;\n    n) DRY_RUN=1 ;;\n    ?) error \"Invalid option: $OPTARG\" ;;\n  esac\ndone"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "getopts should be called with a leading \":\" and \"b:\" (e.g. \":b:n\") so that $OPTARG holds the -b argument and the invalid option name, and the case pattern should be \"\\?\"."
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "The getopts string \"bn\" does not declare \"b\" as taking an argument (should be \"b:\"), so $OPTARG is not set for -b; the getopts string does not start with \":\", so $OPTARG is not set to the invalid option name; and the case pattern \"?\" should be escaped as \"\\?\"."
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Current master branch of Spark (version not stated); shell script (do-release.sh)"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "regression_since",
+     "question": "Was this getopts/case bug in do-release.sh introduced in a specific Spark version (e.g., worked in 3.5.1, fails since 4.0.0), or has it always been present?"
+    },
+    {
+     "target_field": "workaround",
+     "question": "Is there a known workaround for this do-release.sh getopts issue, such as manually editing the script to use \":b:n\" and \"\\?\"?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 2,
+    "le_2": true,
+    "targeted": [
+     false,
+     false
+    ],
+    "redundant": [
+     false,
+     false
+    ],
+    "invalid_target": [
+     false,
+     false
+    ],
+    "order_violation": null,
+    "coverage": null,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31462|minus_steps_to_reproduce",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "missing",
+     "value": null
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "getopts should be called with a leading \":\" and \"b:\" (e.g. \":b:n\") so that $OPTARG holds the -b argument and the invalid option name, and the case pattern should be \"\\?\"."
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "The getopts string \"bn\" does not declare \"b\" as taking an argument (should be \"b:\"), so $OPTARG is not set for -b; the getopts string does not start with \":\", so $OPTARG is not set to the invalid option name; and the case pattern \"?\" should be escaped as \"\\?\"."
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Current master branch of Spark (version not stated); shell script (do-release.sh)"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "steps_to_reproduce",
+     "question": "What exact command line did you run against do-release.sh (e.g. `./do-release.sh -b <arg>` or with an invalid option) and what output did you observe, so we can reproduce the getopts/case misbehavior?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31462|minus_expected_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Run do-release.sh with the current getopts/case block:\nwhile getopts \"bn\" opt; do\n  case $opt in\n    b) GIT_BRANCH=$OPTARG ;;\n    n) DRY_RUN=1 ;;\n    ?) error \"Invalid option: $OPTARG\" ;;\n  esac\ndone"
+    },
+    "expected_behavior": {
+     "status": "missing",
+     "value": null
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "The getopts string \"bn\" does not declare \"b\" as taking an argument (should be \"b:\"), so $OPTARG is not set for -b; the getopts string does not start with \":\", so $OPTARG is not set to the invalid option name; and the case pattern \"?\" should be escaped as \"\\?\"."
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Current master branch of Spark (version not stated); shell script (do-release.sh)"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "expected_behavior",
+     "question": "What did you expect do-release.sh to do with the -b option and with invalid options, and why (e.g., based on getopts documentation or a previous version of the script)?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31462|minus_actual_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Run do-release.sh with the current getopts/case block:\nwhile getopts \"bn\" opt; do\n  case $opt in\n    b) GIT_BRANCH=$OPTARG ;;\n    n) DRY_RUN=1 ;;\n    ?) error \"Invalid option: $OPTARG\" ;;\n  esac\ndone"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "getopts should be called with a leading \":\" and \"b:\" (e.g. \":b:n\") so that $OPTARG holds the -b argument and the invalid option name, and the case pattern should be \"\\?\"."
+    },
+    "actual_behavior": {
+     "status": "missing",
+     "value": null
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Current master branch of Spark (version not stated); shell script (do-release.sh)"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "actual_behavior",
+     "question": "When you run do-release.sh with that getopts/case block, what actually happens \u2014 e.g. does -b fail to capture its argument, does an invalid option print the wrong message, or does the script error out? Please include the exact output or error."
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31462|minus_expected_behavior_actual_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Run do-release.sh with the current getopts/case block:\nwhile getopts \"bn\" opt; do\n  case $opt in\n    b) GIT_BRANCH=$OPTARG ;;\n    n) DRY_RUN=1 ;;\n    ?) error \"Invalid option: $OPTARG\" ;;\n  esac\ndone"
+    },
+    "expected_behavior": {
+     "status": "missing",
+     "value": null
+    },
+    "actual_behavior": {
+     "status": "missing",
+     "value": null
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Current master branch of Spark (version not stated); shell script (do-release.sh)"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "expected_behavior",
+     "question": "What did you expect do-release.sh to do when running it with the current getopts/case block \u2014 e.g., which options should be accepted and how should -b's argument be handled?"
+    },
+    {
+     "target_field": "actual_behavior",
+     "question": "What actually happens when you run do-release.sh with that block \u2014 e.g., the exact error message or the incorrect option/argument behavior you observe?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 2,
+    "le_2": true,
+    "targeted": [
+     true,
+     true
+    ],
+    "redundant": [
+     false,
+     false
+    ],
+    "invalid_target": [
+     false,
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31462|answered_actual_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "Run do-release.sh with the current getopts/case block:\nwhile getopts \"bn\" opt; do\n  case $opt in\n    b) GIT_BRANCH=$OPTARG ;;\n    n) DRY_RUN=1 ;;\n    ?) error \"Invalid option: $OPTARG\" ;;\n  esac\ndone"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "getopts should be called with a leading \":\" and \"b:\" (e.g. \":b:n\") so that $OPTARG holds the -b argument and the invalid option name, and the case pattern should be \"\\?\"."
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "The getopts string \"bn\" does not declare \"b\" as taking an argument (should be \"b:\"), so $OPTARG is not set for -b; the getopts string does not start with \":\", so $OPTARG is not set to the invalid option name; and the case pattern \"?\" should be escaped as \"\\?\"."
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Current master branch of Spark (version not stated); shell script (do-release.sh)"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "regression_since",
+     "question": "Was this getopts/case block ever correct in an earlier Spark release (e.g. worked in 3.5.x), or has do-release.sh always had this bug?"
+    },
+    {
+     "target_field": "workaround",
+     "question": "Is there a known workaround, such as invoking do-release.sh with the branch passed differently or patching the getopts string to \":b:n\" locally?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 2,
+    "le_2": true,
+    "targeted": [
+     false,
+     false
+    ],
+    "redundant": [
+     false,
+     false
+    ],
+    "invalid_target": [
+     false,
+     false
+    ],
+    "order_violation": null,
+    "coverage": null,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31462|unknown_steps_to_reproduce",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "unknown",
+     "value": null
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "getopts should be called with a leading \":\" and \"b:\" (e.g. \":b:n\") so that $OPTARG holds the -b argument and the invalid option name, and the case pattern should be \"\\?\"."
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "The getopts string \"bn\" does not declare \"b\" as taking an argument (should be \"b:\"), so $OPTARG is not set for -b; the getopts string does not start with \":\", so $OPTARG is not set to the invalid option name; and the case pattern \"?\" should be escaped as \"\\?\"."
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Current master branch of Spark (version not stated); shell script (do-release.sh)"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "regression_since",
+     "question": "Was this getopts/case bug in do-release.sh introduced in a specific Spark version, or did it work correctly in an earlier release (e.g. worked in 3.5.x, broken on master)?"
+    },
+    {
+     "target_field": "workaround",
+     "question": "Is there a known workaround for this script bug, such as passing the -b argument differently or patching do-release.sh locally?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 2,
+    "le_2": true,
+    "targeted": [
+     false,
+     false
+    ],
+    "redundant": [
+     false,
+     false
+    ],
+    "invalid_target": [
+     false,
+     false
+    ],
+    "order_violation": null,
+    "coverage": null,
+    "unknown_field": "steps_to_reproduce",
+    "reasked_unknown": false,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31530|original",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "bin\\spark-submit --class org.apache.spark.examples.SparkPi --master local[*] --conf \"spark.driver.extraJavaOptions=-DmyKey=MyValueContainsXmx\" examples\\jars\\spark-examples_2.11-2.4.4.jar"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "The check should be more specific (e.g. match -Xmx) so that extraJavaOptions containing Xmx as a substring (like -DmyKey=MyValueContainsXmx) are allowed."
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "spark-submit fails with: Error: Not allowed to specify max heap(Xmx) memory settings through java options (was -DmyKey=MyValueContainsXmx). Use the corresponding --driver-memory or spark.driver.memory configuration instead."
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Spark 2.4.4 (from the spark-examples_2.11-2.4.4.jar and v2.4.4 source link), spark-submit on Windows (bin\\spark-submit), local[*] master"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "regression_since",
+     "question": "Do you know if this ever worked in an earlier Spark version (e.g. 2.4.3 or 3.x), or has the Xmx substring check always been present since you started using spark-submit?"
+    },
+    {
+     "target_field": "workaround",
+     "question": "Is there a known workaround, such as renaming the option value to avoid the literal \"Xmx\" substring or passing it via a different config?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 2,
+    "le_2": true,
+    "targeted": [
+     false,
+     false
+    ],
+    "redundant": [
+     false,
+     false
+    ],
+    "invalid_target": [
+     false,
+     false
+    ],
+    "order_violation": null,
+    "coverage": null,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31530|minus_steps_to_reproduce",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "missing",
+     "value": null
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "The check should be more specific (e.g. match -Xmx) so that extraJavaOptions containing Xmx as a substring (like -DmyKey=MyValueContainsXmx) are allowed."
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "spark-submit fails with: Error: Not allowed to specify max heap(Xmx) memory settings through java options (was -DmyKey=MyValueContainsXmx). Use the corresponding --driver-memory or spark.driver.memory configuration instead."
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Spark 2.4.4 (from the spark-examples_2.11-2.4.4.jar and v2.4.4 source link), spark-submit on Windows (bin\\spark-submit), local[*] master"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "steps_to_reproduce",
+     "question": "What exact spark-submit command (including your --conf spark.driver.extraJavaOptions=...) reproduces the failure?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31530|minus_expected_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "bin\\spark-submit --class org.apache.spark.examples.SparkPi --master local[*] --conf \"spark.driver.extraJavaOptions=-DmyKey=MyValueContainsXmx\" examples\\jars\\spark-examples_2.11-2.4.4.jar"
+    },
+    "expected_behavior": {
+     "status": "missing",
+     "value": null
+    },
+    "actual_behavior": {
+     "status": "confirmed",
+     "value": "spark-submit fails with: Error: Not allowed to specify max heap(Xmx) memory settings through java options (was -DmyKey=MyValueContainsXmx). Use the corresponding --driver-memory or spark.driver.memory configuration instead."
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Spark 2.4.4 (from the spark-examples_2.11-2.4.4.jar and v2.4.4 source link), spark-submit on Windows (bin\\spark-submit), local[*] master"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "expected_behavior",
+     "question": "What did you expect spark-submit to do with `-DmyKey=MyValueContainsXmx` in spark.driver.extraJavaOptions, and why (e.g., the option is a system property, not a heap setting)?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31530|minus_actual_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "confirmed",
+     "value": "bin\\spark-submit --class org.apache.spark.examples.SparkPi --master local[*] --conf \"spark.driver.extraJavaOptions=-DmyKey=MyValueContainsXmx\" examples\\jars\\spark-examples_2.11-2.4.4.jar"
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "The check should be more specific (e.g. match -Xmx) so that extraJavaOptions containing Xmx as a substring (like -DmyKey=MyValueContainsXmx) are allowed."
+    },
+    "actual_behavior": {
+     "status": "missing",
+     "value": null
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Spark 2.4.4 (from the spark-examples_2.11-2.4.4.jar and v2.4.4 source link), spark-submit on Windows (bin\\spark-submit), local[*] master"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "actual_behavior",
+     "question": "What exactly happens when you run that spark-submit command \u2014 does it fail with an error message or exception (please paste the key lines), or does it silently ignore the option?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 1,
+    "le_2": true,
+    "targeted": [
+     true
+    ],
+    "redundant": [
+     false
+    ],
+    "invalid_target": [
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  },
+  {
+   "item_id": "SPARK-31530|minus_steps_to_reproduce_actual_behavior",
+   "states": {
+    "steps_to_reproduce": {
+     "status": "missing",
+     "value": null
+    },
+    "expected_behavior": {
+     "status": "confirmed",
+     "value": "The check should be more specific (e.g. match -Xmx) so that extraJavaOptions containing Xmx as a substring (like -DmyKey=MyValueContainsXmx) are allowed."
+    },
+    "actual_behavior": {
+     "status": "missing",
+     "value": null
+    },
+    "environment": {
+     "status": "assumed",
+     "value": "Spark 2.4.4 (from the spark-examples_2.11-2.4.4.jar and v2.4.4 source link), spark-submit on Windows (bin\\spark-submit), local[*] master"
+    },
+    "regression_since": {
+     "status": "missing",
+     "value": null
+    },
+    "workaround": {
+     "status": "missing",
+     "value": null
+    }
+   },
+   "called": true,
+   "questions": [
+    {
+     "target_field": "steps_to_reproduce",
+     "question": "What exact spark-submit command and spark.driver.extraJavaOptions value did you use that triggered the failure?"
+    },
+    {
+     "target_field": "actual_behavior",
+     "question": "What error message or exception did spark-submit print when it rejected the option?"
+    }
+   ],
+   "metrics": {
+    "n_questions": 2,
+    "le_2": true,
+    "targeted": [
+     true,
+     true
+    ],
+    "redundant": [
+     false,
+     false
+    ],
+    "invalid_target": [
+     false,
+     false
+    ],
+    "order_violation": false,
+    "coverage": 1.0,
+    "unknown_field": null,
+    "reasked_unknown": null,
+    "reask_cause": null
+   }
+  }
+ ]
+}

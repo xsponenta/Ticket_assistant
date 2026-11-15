@@ -27,3 +27,6 @@ scikit-learn>=1.5
 
 # C2 duplicate finder: local embedders (CPU)
 sentence-transformers>=3.0
+
+# App (UI framework named in AGENTS.md)
+streamlit>=1.50  # width="stretch" API

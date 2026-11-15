@@ -93,6 +93,11 @@ Rules:
   (date, component, metric, value, n, model, prompt version, note).
 - Always show ≥3 worst examples with a hypothesis why they failed.
 - Before a run with >300 LLM calls, report the estimate and wait for approval.
+- Prefer deterministic metrics (grounding check, field presence, schema checks) wherever possible; use an
+  LLM judge only where nothing deterministic works.
+- Judge rubric: write the rubric with explicit edge cases (absence claims, partial support, paraphrase) into the
+  judge prompt AND show the same rubric on screen in any calibration CLI, so the human labels against the same
+  definition (lesson from C3: κ < 0 from a criterion mismatch, see decisions.md L2 update).
 - LLM-as-judge: prompts in `src/prompts/judge_*.md`, binary questions where possible, otherwise an
   anchored 1–5 rubric; reasoning before score; temperature 0; judge model ≠ generator model;
   calibrate against human scores and report agreement.

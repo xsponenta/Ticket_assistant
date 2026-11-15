@@ -358,6 +358,13 @@ def run_verdicts(items: dict, keys: list[str], variant: str, k: int, tag: str, b
     }
 
 
+def precision_of(items: dict, claims: list[dict]) -> float | None:
+    """Share of already_supported verdicts whose label is already_supported (None without claims)."""
+    return (
+        round(sum(items[r["key"]]["label"] == "already_supported" for r in claims) / len(claims), 3) if claims else None
+    )
+
+
 def verdict_metrics(items: dict, results: list[dict], citations: list[dict]) -> dict[str, Any]:
     keys = [r["key"] for r in results]
     gold = [items[k]["label"] for k in keys]
@@ -370,6 +377,7 @@ def verdict_metrics(items: dict, results: list[dict], citations: list[dict]) -> 
         (r["key"], c, c in r["retrieved"]) for r in results if "output" in r for c in r["output"]["cited_chunk_ids"]
     ]
     supported = [r for r in results if "output" in r and r["output"]["verdict"] == "already_supported"]
+    grounded = [r for r in supported if r["doc_reference_grounded"]]
     sentences = [len([s for s in r["explanation"].replace("e.g.", "eg").split(". ") if s.strip()]) for r in outs]
     return {
         "n": len(keys),
@@ -390,6 +398,11 @@ def verdict_metrics(items: dict, results: list[dict], citations: list[dict]) -> 
         if citations
         else None,
         "n_citations_judged": len(citations),
+        # M3: C3 is precision-oriented; "already supported" is shown only when doc_reference is grounded.
+        "already_supported_claims": len(supported),
+        "already_supported_precision": precision_of(items, supported),
+        "already_supported_grounded_claims": len(grounded),
+        "already_supported_precision_grounded": precision_of(items, grounded),
         "doc_reference_grounded": round(sum(bool(r["doc_reference_grounded"]) for r in supported) / len(supported), 3)
         if supported
         else None,
@@ -406,7 +419,10 @@ def fmt(m: dict[str, Any]) -> str:
     return (
         f"acc {m['accuracy']:.3f} [{m['accuracy_ci95'][0]:.2f}–{m['accuracy_ci95'][1]:.2f}] (majority "
         f"{m['majority_baseline']:.3f}); macro-F1 {m['macro_f1']:.3f}; citation support {m['citation_support_rate']}; "
-        f"doc_ref grounded {m['doc_reference_grounded']}; invalid citations {m['invalid_citation_rate']}"
+        f"doc_ref grounded {m['doc_reference_grounded']}; already_supported precision "
+        f"{m['already_supported_precision']} ({m['already_supported_claims']} claims), grounded-only "
+        f"{m['already_supported_precision_grounded']} ({m['already_supported_grounded_claims']}); "
+        f"invalid citations {m['invalid_citation_rate']}"
     )
 
 
@@ -523,8 +539,11 @@ def main() -> None:
     if args.stage == "test":
         check_test_allowed("test", args.confirm_test, args.force, FINAL_CONFIG, RESULTS_DIR, prefix="c3")
         final = json.loads(FINAL_CONFIG.read_text())
+        if corpus_info(load_chunks())["sha256"] != final["corpus_sha256"]:
+            raise SystemExit("The doc corpus differs from the approved one (corpus_sha256 in c3_final_config.json).")
         res = run_verdicts(items, split["test"], final["variant"], final["k"], "test", budget)
-        data = {"stage": "test", "final_config": final, **res}
+        subsets = subset_report(items, res)
+        data = {"stage": "test", "final_config": final, **res, "subsets": subsets}
         path = save("test", data, False)
         plot_confusion(
             res["metrics"]["confusion"],
@@ -532,19 +551,23 @@ def main() -> None:
             f"C3 · test · {final['variant']} k={final['k']}",
             FIG_DIR / "c3_test.png",
         )
-        print(f"  test: {fmt(res['metrics'])}")
+        for name in ("all", "docs_evidenced", "knowledge_based"):
+            print(f"  test {name:<16} n={subsets[name]['n']:<3} " + (fmt(subsets[name]) if subsets[name]["n"] else "—"))
         append_rows(
             [
                 [
                     date,
                     "C3 scope checker",
-                    "verdict (test)",
-                    fmt(res["metrics"]),
-                    str(res["metrics"]["n"]),
+                    f"verdict (test, {name})",
+                    fmt(subsets[name]),
+                    str(subsets[name]["n"]),
                     f"{llm._settings().models['generator']} · {final['variant']} k={final['k']}",
                     res["prompt_version"],
-                    f"test, once; judge numbers count only if calibrated; {path.name}",
+                    f"test, once; corpus {res['corpus']['n_chunks']} chunks; citation judge uncalibrated "
+                    f"(κ −0.04); {path.name}",
                 ]
+                for name in ("all", "docs_evidenced", "knowledge_based")
+                if subsets[name]["n"]
             ]
         )
         return

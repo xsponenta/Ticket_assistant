@@ -520,6 +520,23 @@ def _read_log(path: Path) -> list[dict[str, Any]]:
         return [json.loads(line) for line in f if line.strip()]
 
 
+def log_offset() -> int:
+    """Current size of the call log; pass it to session_calls() to read only the calls made after this point."""
+    path = _settings().log_path
+    return path.stat().st_size if path.exists() else 0
+
+
+def session_calls(session_id: str, offset: int = 0) -> list[dict[str, Any]]:
+    """Logged calls (incl. cache hits and failures) of one session, written after `offset` (for the app's trace)."""
+    path = _settings().log_path
+    if not path.exists():
+        return []
+    with _log_lock, path.open(encoding="utf-8") as f:
+        f.seek(offset)
+        rows = [json.loads(line) for line in f if line.strip()]
+    return [r for r in rows if r.get("session_id") == session_id]
+
+
 def ping() -> int:
     s, failures = _settings(), 0
     print(f"{'role':<10} {'model':<45} {'status':<7} {'latency_ms':>10} {'tokens in/out':>14} {'cost $':>10}  reply")

@@ -1,0 +1,50 @@
+{
+ "created_at": "2026-11-15T16:49:40+00:00",
+ "extraction_prompt": "ablation_extract/v2",
+ "tickets": {
+  "dev/bug": 15,
+  "dev/feature": 15,
+  "dev/task": 15,
+  "dev/idea": 13,
+  "test/bug": 15,
+  "test/feature": 15,
+  "test/task": 15,
+  "test/idea": 15
+ },
+ "extraction_failures": [],
+ "items": {
+  "dev/original": 58,
+  "dev/minus": 141,
+  "dev/answered": 52,
+  "dev/unknown": 52,
+  "test/original": 60,
+  "test/minus": 139,
+  "test/answered": 51,
+  "test/unknown": 51
+ },
+ "items_per_class": {
+  "dev/bug": 101,
+  "dev/feature": 71,
+  "dev/task": 58,
+  "dev/idea": 73,
+  "test/bug": 104,
+  "test/feature": 73,
+  "test/task": 50,
+  "test/idea": 74
+ },
+ "excluded_fields": {
+  "environment": 11,
+  "regression_since": 2,
+  "steps_to_reproduce": 1,
+  "acceptance_criteria": 5,
+  "scope": 6,
+  "definition_of_done": 4,
+  "target_users": 10,
+  "open_questions": 3,
+  "expected_impact": 9,
+  "expected_behavior": 1,
+  "proposed_behavior": 2,
+  "alternatives_considered": 1
+ },
+ "test_sha256": "bf1484fea4f6e96a3554ad623ea33f2e7d9b651535e33994cca693f7be3548f3"
+}

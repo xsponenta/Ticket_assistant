@@ -71,6 +71,8 @@ def test_baseline_fits_and_predicts():
     model = BaselineC1.fit(texts, list(df.target_class), [c1.map_components(c) for c in df.components], 1.0, 1.0)
     out = model.predict(["upgrade dependency version bump"])[0]
     assert out["label"] == "task" and 0 < out["confidence"] <= 1 and len(out["component"]) == 3
+    top2 = model.rank_classes(["upgrade dependency version bump"])[0]  # M1: the user confirms one of the top 2
+    assert len(top2) == 2 and top2[0] == (out["label"], out["confidence"]) and top2[0][1] >= top2[1][1]
 
 
 def test_prompt_and_llm_call(monkeypatch):

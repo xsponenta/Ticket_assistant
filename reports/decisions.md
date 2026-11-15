@@ -426,3 +426,94 @@ The models learn some of these conventions from TRAIN; a person reading the defi
 - **Decision:** C3 stays **docs-grounded**. The assistant must not claim "already supported" without a citation, so there is no relabelling and no answering from model knowledge.
 - **Added evidence:** for the `already_supported` labels without a chunk, the user reviews the hybrid top 5 of the new corpus and may add a supporting chunk. This adds evidence; it does not change labels. It is stored separately (`data/eval/scope_evidence_added.jsonl`).
 - **Reporting:** C3 is reported on all items and separately on "docs-evidenced" (a supporting chunk exists) and "knowledge-based" (none).
+
+**Correction to the C3 label semantics** (user, 2026-11-15; supersedes "I know Spark can do this today" above):
+- **Who labelled:** the 80 scope labels come from **a single non-expert annotator** (the user is not a Spark expert). Some `already_supported` labels, especially those without a supporting chunk, are **educated guesses, not verified knowledge**.
+- **Consequence:** the **knowledge-based** subset (no supporting chunk) is treated as **noisy labels**, not as ground truth the system failed. The **docs-evidenced** subset stays the primary C3 measure. Labels are still not changed.
+- **Finding that limits the docs-evidenced subset too** (inspection, `eval/results/c3_compare_20261115T161018Z.json`; `label_cli` reproduces all 80 stored BM25 top-5 lists exactly, so ids and texts are what was shown):
+  - `label_cli` showed 280-character chunk previews and did not define "supporting chunk". In practice the chosen chunk is the most related of the 5 shown, not a chunk that shows the capability.
+  - In dev, none of the 12 docs-evidenced `already_supported` evidence chunks states the requested capability: 4 are on-topic (Spark Connect, RDD caching, Maven build), 8 are unrelated. For example, SPARK-31008 `json_array_length` was evidenced with a cloud-integration "Further reading" chunk (the function reference was not in the corpus then).
+  - So "docs-evidenced" means "the annotator found a related doc", and this subset is also agreement with a noisy annotator. It is reported as the more reliable of the two subsets, with this caveat.
+- **Same pattern in judge calibration:** the user's "supports / relevant" means "on-topic". The judge's means "states it" (see L2 update below).
+
+## L2 update — 2026-11-15: C3 judges fail calibration
+
+| Judge (`google/gemini-3.5-flash-lite`) | n | Human yes | Judge yes | Agreement | κ human vs judge | Repeat agreement (κ) |
+|---|---:|---:|---:|---:|---:|---:|
+| citation support (`judge_citation_support/v1`) | 30 | 22 | 10 | 0.40 | **−0.04** | 0.87 (0.68) |
+| chunk relevance (`judge_chunk_relevance/v1`) | 14* | 10 | 7 | 0.36 | **−0.29** | 0.93 (0.86) |
+
+\*1 of the 15 relevance pairs is unlabelled. Source: `eval/results/c3_judge_calibration_20261115T160918Z.json`.
+
+- **Rule applied (B1/L2):** κ < 0.6, so **both judges are uncalibrated**. The citation-support rate and the retrieval-variant selection (relevance@5) are reported as **uncalibrated proxies**.
+- **Diagnosis:** the disagreement is a **definition mismatch, not judge noise**. The judge is self-consistent (repeat agreement 0.87 / 0.93).
+  - On `already_supported` citations, human and judge agree on 4 of 5.
+  - On the other verdicts ("the docs do not show X", citing the closest related chunk), they agree on 8 of 25: the human says "supports" 18 times, the judge 5.
+  - Flipping the two likely labelling slips (SPARK-31008 #436, SPARK-48643 #220) leaves κ at 0.04 / −0.14.
+- **Fallback (L2), proposed and not applied:** a strong-tier judge from a provider other than the generator (DeepSeek). The cost is below; reasoning tokens are an assumption (300–800 per call, as these models reason by default).
+
+| Candidate (`scripts/list_models.py --tier strong`) | $/1M in / out | 45 calibration pairs | + dev 55 + test ≈ 100 citations (≈ 200 calls) |
+|---|---:|---:|---:|
+| `anthropic/claude-fable-5.2` (L2's example) | 8 / 40 | ≈ $0.8–1.7 | ≈ $3.6–7.6 |
+| `sakana/fugu-ultra-v2` | 5 / 30 | ≈ $0.6–1.3 | ≈ $2.5–5.5 |
+| `meta/muse-wonder` | 4 / 20 | ≈ $0.4–0.9 | ≈ $1.8–3.8 |
+
+- **Recommendation:** do not switch. A stronger judge applying the same question would still read "support" as "states it", so it is unlikely to reach κ ≥ 0.6 against these labels. The C3 decision rests on accuracy and the deterministic `doc_reference` grounding check. If wanted: run one candidate on the 45 calibration pairs only (≤ $1.7) and adopt it only if κ ≥ 0.6.
+
+**Resolution (user, 2026-11-15):**
+- **No strong-tier judge.** The L2 fallback is not applied.
+- **The disagreement is a criterion mismatch.** For "the docs do not show X" answers, the annotator counted the closest related chunk as support; the judge required the chunk to state the claim.
+- **Adopted definition:** the judge's stricter reading is what the product needs (no claim without evidence), so it is the definition of citation support from now on.
+- **Annotation limitation:** the annotator's labels used a looser criterion. This also applies to the supporting chunks and relevance labels.
+- **κ values are kept as measured,** and judge numbers stay uncalibrated proxies.
+- **Rule for the remaining judges (C5, C6, e2e), added to AGENTS.md:**
+  - the rubric, with explicit edge cases (absence claims, partial support, paraphrase), goes in the judge prompt and is shown on screen in the calibration CLI;
+  - deterministic metrics are preferred; a judge is used only where nothing deterministic works.
+
+## M3 · C3 is precision-oriented — 2026-11-15
+
+| Decision | Alternatives | Why |
+|---|---|---|
+| The assistant tells the user "already supported" **only** when C3's verdict is `already_supported` **and** `doc_reference` is grounded in the retrieved chunks (deterministic check). Every other outcome (other verdict, ungrounded reference, generation failure) lets the user continue to a ticket. **Precision of `already_supported`** is the key C3 metric; accuracy and macro-F1 are secondary. | (1) Show every C3 verdict as advice, also for ND/OOS/II. (2) Stop the user on any `already_supported`, grounded or not. (3) Optimise accuracy. | A false `needs_development` costs one unnecessary ticket. A false `already_supported` wrongly stops the user, so it is the expensive error. Test (`c3_test_20261115T161845Z.json`): precision 0.625 (5/8) [0.25–0.88], all 8 claims grounded. 2 of the 3 wrong claims are defensible by the 4.3.0 docs (labels judged older proposals). Known limitation: the grounding check accepts generic references (e.g. "pyspark"). |
+
+## E1 · C4/C5 ablation eval set — 2026-11-15
+
+| Decision | Alternatives | Why |
+|---|---|---|
+| Gold "which fields are missing" comes from **rich real tickets with the text of 1–2 required fields deleted** (`data/eval/gap_ablation.jsonl`; dev = 58 val tickets, test = the 60 simulator candidates; 303 / 301 items). Deleted passages are the verbatim quotes of a generator extraction (`ablation_extract/v2`), located deterministically. Spot check: the 10 spot-check extractions (`eval/results/gap_spotcheck_20261115T164526Z.md`) were reviewed by the assistant, not confirmed by the user: no quote assigned to the wrong field; 2 doubtful values (SPARK-33121 environment says "Java API" for Scala code in a ```java fence; SPARK-52965 environment quotes a sentence about the failure) (corrected 2026-11-15; an earlier version of this entry wrongly said the user had confirmed it). | Hand-written incomplete requests (small, unrealistic); a judge deciding completeness (not deterministic). | Real ticket language, exact gold by construction, deterministic metrics (AGENTS judge rule). |
+| **Overlap rule:** when deleting *f* also removes part of another field *g*, *g* is left out of scoring for that variant. | Strict: a field that shares text with another is not deletable. That left ≈ 199 / 180 items, and 49 of 118 tickets (mostly ideas and features) gave only the original. | **No half-deleted field is ever scored**, and the set keeps its size and its class balance (user decision). |
+| **Title rule:** text is never deleted from the title; a field quoted in the title is not deletable. | Delete from the title too, leaving an empty "Summary:" (28 cases). | **A real conversation always starts with a title** (user decision). |
+| Fields the extraction marked `assumed` or could not ground are excluded from scoring (55 field slots). | Count assumed as present or as missing. | Their gold is uncertain. |
+| Extraction iteration: v1 left quotes out (23% of tickets failed validation), and one ticket produced a 131k-token runaway ($0.07). For v2, all keys are required with `quotes` first, and new LLM calls are capped (`max_tokens`: extraction 4,000, C4 3,000, C5 600). | Drop the failed tickets (biases the set toward easy tickets). | 118 / 118 extracted with v2. |
+| **C4 status `unknown`** (user decision): set only when the user was asked and later said they don't know. C5 never asks about it; C6 will render it as "Unknown (reporter)"; metrics count it as resolved. Evaluated by the `unknown_<f>` variants. | Treat "don't know" as missing (C5 would re-ask). | Re-asking a question the user already said they can't answer is the worst dialogue error. |
+| C4 prompt `c4_gap/v1 → v2` (smoke fix on 20 dev items, **not** the one tuning revision): v1 copied stack traces into `value`/`evidence` (3 of 20 outputs cut off at 3,000 tokens) and left `evidence` empty for 20 confirmed fields. v2 makes all `FieldState` keys required with `evidence` first, and asks for short quotes and one-sentence values. | Raise `max_tokens`. | 0 failures, grounding 1.0, half the cost. Dev results are reported for v2 only. |
+| No C4 tuning revision for the deleted-field over-crediting pattern (137 of 173 deleted fields resolved). | A rule like "never confirm a field from another field's passage". | Evidence sources: another field's passage 58, unquoted text 45, title 33. Much of this is gold leakage, so such a rule would fit the gold's artifacts, not reality. Proposed instead: a small human audit before test. |
+
+## M4 · `assumed` fields are never accepted silently — 2026-11-15
+
+| Decision | Alternatives | Why |
+|---|---|---|
+| Fields C4 marks `assumed` are **never accepted silently**. C6 lists them under **"Assumptions to confirm"**, and the UI asks the user to confirm or correct each one before the ticket is final. C5 keeps asking only about `missing` fields. | (1) Treat `assumed` as confirmed (inferred values would reach Jira unchecked). (2) Treat `assumed` as missing (C5 would ask questions whose answer the user already implied, costing turns). | An assumption is shown with its inferred value, so the user corrects it in one click instead of answering an open question. That makes it acceptable in the product for C4 to lean toward `assumed` rather than `missing`: on dev, 56 of 173 deleted fields and 28 of 501 natural gaps were marked `assumed`. The "missing + assumed" view (F1 0.867) is the operational one for "nothing reaches the ticket unconfirmed". `confirmed` on absent information remains the costly C4 error (measured by the audit). |
+
+## M5 · C6 and pipeline design — 2026-11-15
+
+| Decision | Alternatives | Why |
+|---|---|---|
+| **C6 split:** the LLM writes only the title, labels and field texts. Code assembles the ticket: jira_type from YAML, the confirmed component, "Unknown (reporter)", "_Not provided_" for required missing fields, the "Assumptions to confirm" section, and no priority / fix version. | The LLM writes the whole Markdown body. | The hard rules hold by construction instead of depending on the prompt; they are still measured (dev: 1.000 on every rule check). |
+| **C6 eval metric fix** (after the 20-item smoke run, before dev): the invented-token check covers the title and **confirmed** fields only; fence markers are stripped; backticked tokens have no whitespace; there is a generic Spark noun list. Grounding is reported for confirmed and assumed values separately. | Keep the first version (14% invented tokens, mostly false positives). | Assumed fields carry C4's inference on purpose (M4); the rest were measurement artefacts. A measurement fix, not tuning: C6 and its prompt were unchanged. |
+| **Pipeline question loop** continues only while a **required** field is missing (max 4 turns; "skip" stops it with no extra C4 call). | Ask until every class field is resolved. | Optional fields would cost the user up to 4 extra turns (found by the pipeline tests). C5 still asks about optional fields in the same turn as a required one. |
+| **Assumption confirmation re-renders deterministically** (no second C6 call). Corrections are appended to the conversation and become confirmed fields. | Recompose with C6. | No new LLM text, so a confirmed ticket does not change elsewhere; no cost; cannot fail. |
+| **C1 in the UI:** top-2 classes with probabilities (M1). The component is pre-filled with the **top-1**, and the top 3 are shown as suggestions. | Pre-fill all top 3 (M1 wording). | SPARK issues usually have one component; pre-filling three invites over-tagging. A refinement of M1. |
+| **Graceful failure:** a failed step is recorded in the trace and `last_error`, the stage is kept, and `retry()` reruns the segment. The UI shows a message and a Retry button; the driver stops. | Let exceptions propagate. | The session survives provider errors (user decision). |
+
+## M6 · UX fixes from the user's manual run — 2026-11-15
+No evaluated prompt or config changed.
+
+| Decision | Why |
+|---|---|
+| **C2 pass 1 never alerts.** Its candidates are shown as "Related issues you may want to check"; the warning banner appears only for pass 2 (full description, threshold 0.839). | The first message is short, and summary-only false alarms were 18–25% on test (M2). An alert at that point mostly cries wolf. |
+| **The component confirmed in the UI always wins:** after every C4 call, `component` is set to `confirmed` with the user's value. | C4 re-reads the component from the text and could show a different one; the user's confirmation is final (C6 already used the confirmed value; the field table now agrees). |
+| **Field table:** a missing *optional* field shows a grey "not provided" (red "missing" only for required ones); the `labels` row is hidden unless set. | A missing optional field is not an error; the red badge suggested one. |
+| **Title icon 🐞** instead of 🎫. | 🎫 renders as "LIVE CONCERT TICKET" in macOS text-to-speech and tooltips. |
+
+Tests: `tests/test_pipeline.py::test_m6_pass1_never_alerts_and_confirmed_component_wins`; UI checked with `streamlit.testing.AppTest`.

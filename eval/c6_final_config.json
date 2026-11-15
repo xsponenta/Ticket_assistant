@@ -1,0 +1,9 @@
+{
+  "approved_at": "2026-11-15",
+  "approved_by": "user",
+  "source": "eval/results/c6_dev_20261115T172323Z.json",
+  "prompt_version": "c6_compose/v1",
+  "role": "generator",
+  "max_tokens": 2000,
+  "c4_states": {"dev": "c4_dev_20261115T165319Z.json", "test": "c4_test_20261115T170923Z.json"}
+}
