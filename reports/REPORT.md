@@ -53,65 +53,100 @@ UCU NLP course, Assignment 1 · CRISP-DM · code at `main` (`087297a`) · all nu
 
 ## 3. Architecture
 
-### (a) Data flow through C1–C6
+### (a) Data flow
 
 ```mermaid
 flowchart LR
-  subgraph EXT[External sources]
-    JIRA[(Apache Jira REST API)]
-    DOCS[(Spark 4.3.0 docs + rendered reference tables)]
-    OR{{OpenRouter API}}
+  subgraph PREP["Offline preparation"]
+    direction TB
+    JIRA["Apache Jira API"]:::ext --> CLEAN["Clean + mask PII"]:::ext
+    SDOCS["Spark 4.3.0 docs"]:::ext --> CHUNK["Chunk docs"]:::ext
   end
-  subgraph STORE[Stores]
-    ISS[(issues.parquet<br/>14,989 SPARK issues)]
-    CHK[(doc_chunks.jsonl<br/>2,932 chunks)]
-    EMB[(embeddings cache .npy)]
-    LOG[(logs/llm_calls.jsonl + disk cache)]
+
+  U(["User message"]):::io --> CLS["Type classifier<br/>C1 · TF-IDF + LogReg"]:::local
+  U --> DUP1["Duplicate search 1<br/>C2 · bge-small"]:::local
+  CLS --> CONF{{"User confirms type"}}:::io
+  CONF --> GAP["Gap detector<br/>C4 · LLM"]:::llm
+  GAP -->|"missing fields"| QG["Question generator<br/>C5 · LLM"]:::llm
+  QG -->|"user answers"| GAP
+  GAP -->|"feature / task / idea"| DOC["Docs check<br/>C3 · bge-small + LLM"]:::llm
+  GAP -->|"bug"| DUP2
+  DOC --> DUP2["Duplicate search 2<br/>C2 · bge-small"]:::local
+  DUP2 --> COMP["Ticket composer<br/>C6 · LLM + template"]:::llm
+  COMP --> T(["Jira-ready ticket"]):::io
+
+  subgraph STORES["Stores"]
+    ISS[("issues.parquet<br/>14,989 issues + embeddings")]:::store
+    CHK[("doc_chunks<br/>2,932 chunks + embeddings")]:::store
   end
-  JIRA -->|fetch, clean, PII mask| ISS
-  DOCS -->|chunk 300–500 tok + 1 entry/chunk| CHK
-  U([User message]) --> C1
-  C1[C1 classifier<br/>LOCAL TF-IDF + LogReg] -->|top-2 class, top-3 component| UI[Streamlit UI<br/>user confirms]
-  U --> C2a[C2 pass 1<br/>LOCAL bge-small dense]
-  ISS --> C2a
-  EMB --- C2a
-  UI --> C4[C4 gap detector<br/>LLM deepseek-v4.1-flash]
-  C4 -->|missing required fields| C5[C5 question generator<br/>LLM deepseek-v4.1-flash]
-  C5 -->|≤ 2 questions| U
-  C4 -->|feature/task/idea| C3[C3 scope checker<br/>LOCAL bge-small top-8 + LLM deepseek-v4.1-flash]
-  CHK --> C3
-  EMB --- C3
-  C3 --> C2b[C2 pass 2<br/>LOCAL bge-small dense]
-  ISS --> C2b
-  C2b --> C6[C6 ticket composer<br/>LLM deepseek-v4.1-flash + deterministic render]
-  C6 --> T([Jira-ready Markdown + JSON])
-  C4 & C5 & C3 & C6 -.->|all LLM calls via src/llm.py| OR
-  OR -.-> LOG
+  CLEAN --> ISS
+  CHUNK --> CHK
+  ISS -.-> CLS
+  ISS -.-> DUP1
+  ISS -.-> DUP2
+  CHK -.-> DOC
+
+  subgraph LEGEND["Legend"]
+    direction LR
+    LG1["LLM step"]:::llm
+    LG2["Local model"]:::local
+    LG3[("Store")]:::store
+  end
+
+  classDef llm fill:#fde2c8,stroke:#d9822b,color:#111
+  classDef local fill:#d6eaf8,stroke:#2e86c1,color:#111
+  classDef store fill:#eeeeee,stroke:#777777,color:#111
+  classDef io fill:#ffffff,stroke:#333333,color:#111
+  classDef ext fill:#f6f6f6,stroke:#aaaaaa,color:#333
 ```
 
+- **All LLM calls** go through `src/llm.py` → OpenRouter (generator `deepseek-v4.1-flash`, reasoning off), with a disk cache, retries, structured output with one repair, the call log `logs/llm_calls.jsonl`, and Langfuse if its keys are set.
+- **Dotted edges** mark the steps that read a store. The type classifier is fitted on the train split of `issues.parquet`.
 - **Evaluation-only models:** judge `google/gemini-3.5-flash-lite` (C3 judges); simulator `qwen/qwen3.5-27b` (end-to-end). Neither is used by the app.
-- **Infrastructure:** every LLM call goes through `src/llm.py` (disk cache, retries, structured output with one repair, call log, Langfuse if keys are set).
 
 ### (b) Pipeline state machine (`src/pipeline.py`, no agent framework)
 
 ```mermaid
 stateDiagram-v2
-    [*] --> intake
-    intake --> confirm_class: start / C1 top-2 + C2 pass 1 (related issues, no alert, M6)
-    confirm_class --> asking: confirm / C4, a required field missing, C5 (≤ 2 questions)
-    asking --> asking: answer / C4, still missing and turns < 4, C5
-    asking --> scoping: "skip", nothing required missing, or 4 turns
-    confirm_class --> scoping: nothing required missing
-    state scoping <<choice>>
-    scoping --> scope_decision: feature/task/idea and C3 already_supported with a grounded doc_reference (M3)
-    scoping --> composing: bug, any other C3 verdict, or a failed C3 call (M7)
-    scope_decision --> stopped: stop
-    scope_decision --> composing: continue
-    state composing <<choice>>
-    composing --> confirm_assumptions: C2 pass 2 (alert ≥ 0.839) + C6, assumed fields exist (M4)
-    composing --> done: no assumptions
-    confirm_assumptions --> done: corrections → confirmed, deterministic re-render
+    direction LR
+    state "Waiting for message" as Intake
+    state "Confirm type" as ConfirmType
+    state "Asking questions" as Asking
+    state "Already supported?" as ScopeDecision
+    state "Confirm assumptions" as ConfirmAssumptions
+    state "Ticket done" as Done
+    state "Stopped" as Stopped
+    state DocsCheck <<choice>>
+    state Compose <<choice>>
+
+    [*] --> Intake
+    Intake --> ConfirmType: first message
+    ConfirmType --> Asking: field missing
+    Asking --> Asking: answer, still missing
+    Asking --> DocsCheck: complete, skip, cap
+    ConfirmType --> DocsCheck: nothing missing
+    DocsCheck --> ScopeDecision: grounded match
+    DocsCheck --> Compose: otherwise
+    ScopeDecision --> Stopped: user stops
+    ScopeDecision --> Compose: user continues
+    Compose --> ConfirmAssumptions: assumptions exist
+    Compose --> Done: no assumptions
+    ConfirmAssumptions --> Done: user confirms
+    Stopped --> [*]
+    Done --> [*]
 ```
+
+**What each transition does** (the edge labels are short on purpose; the details are here):
+
+| Transition | What runs |
+|---|---|
+| First message | Type classifier (top-2 classes) + duplicate search 1, shown as related issues with no alert (M6) |
+| Field missing / answer, still missing | Gap detector, then the question generator (≤ 2 questions); the loop is capped at 4 turns |
+| Complete, skip, cap | Questions end when no required field is missing, the user types "skip", or 4 turns are reached |
+| Grounded match | At the first diamond (docs check), feature / task / idea only: the docs check says "already supported" with a `doc_reference` found in the retrieved docs (M3) |
+| Otherwise | A bug (no docs check), any other verdict, or a failed docs check (M7) |
+| Assumptions exist / no assumptions | Duplicate search 2 (alert at ≥ 0.839) + the ticket composer run first; assumed fields go to the user (M4) |
+| User confirms | Corrections become confirmed fields; the ticket is re-rendered without an LLM call |
 
 - **State:** JSON-serializable.
 - **Trace:** every step is a `TraceEvent` (latency; LLM cost and cache state from the call log). It is visible in the app's "Trace" expander.
@@ -233,11 +268,31 @@ The project was built with Claude Code as a coding agent, under explicit rules:
   - it refused to record a commit that did not describe the running code;
   - it kept post-test results separate.
 
-### What I corrected manually
-> **TODO (author):** describe the corrections and decisions you made yourself, e.g. scope labels and their
-> semantics, target changes (B1/B2), the "last corpus iteration" rule, the overlap and title rules (E1), the
-> `unknown` status, the M6 UX list from the manual run, the M7 approval, rejected plans or parameters, and what
-> you changed in prompts, reports or code by hand.
+### What I did manually
+
+The coding agent wrote most of the code, but every important judgement in this project was made or checked by hand.
+
+**Manual labelling and review (all stored in `data/eval/`):**
+- **80 scope labels** for C3, labelled one by one in `label_cli`, then a second **evidence review of 23 items** against the rebuilt documentation corpus.
+- **40 blind labels for the C1 human ceiling.** My macro-F1 against Jira types was 0.37, which showed the classes are ambiguous even for a person and became the C1 target.
+- **44 judge-calibration labels** (citation support and chunk relevance). They showed the LLM judge applies a stricter definition of "support" than I did; we adopted the stricter one.
+- **20 blind audit cases for C4**, which turned its false-confirmed rate from an upper bound of 0.47 into a corrected 0.31.
+- **20 clarity ratings** of generated questions (average 2.65 / 3).
+
+**Decisions I made:**
+- Approved or changed every agent plan in plan mode before code was written; most plans got additions from me (thread-safe LLM client, Jira-key masking, grounding checks, a headless driver for the end-to-end test).
+- Chose the models per role from the bake-off, overriding the cheapest simulator because honesty mattered more than cost.
+- Set the data decisions D1–D5 from the EDA: no Sub-tasks, no Wish issues from other projects (class leakage), 2026 as a separate drift set.
+- Set stopping rules: test sets evaluated once, at most one prompt revision per component, one declared "last" corpus iteration for C3. When C2's test false-alarm rate came out at 0.25, I kept it instead of re-tuning on test.
+
+**Corrections:**
+- Fixed a false attribution: the agent had recorded a spot check as mine that I had not done.
+- Restated my scope labels as single non-expert labels and did not relabel anything after seeing model outputs.
+- Tested the app by hand and found four problems the unit tests missed (a false duplicate alert on short openers, C4 overwriting the component I had confirmed, optional fields shown as errors, a broken title emoji). These became the M6 fixes before the end-to-end test.
+
+**Agent setup and skills:**
+- `AGENTS.md` and `CLAUDE.md` defined the rules the agent followed throughout: CRISP-DM phase reports, a single LLM client, frozen eval sets, plan-first approval, cost estimates before large runs.
+- At the end I had the workflow that emerged during the project codified as seven skills (`add-component`, `run-eval`, `labeling-cli`, `llm-judge`, `crisp-dm-report`, `apache-jira-data`, `user-simulator`), each recording the mistakes we actually hit, so the next project starts from them.
 
 ## 10. How to run
 See [`README.md`](../README.md). Deployment notes (runtime requirements, cost and latency per ticket, known risks, monitoring, second iteration) are in [`06_deployment.md`](06_deployment.md).
